@@ -6,30 +6,26 @@ The projects focus on incident analysis, security monitoring, phishing investiga
 
 ---
 
-## 🔐 Projects Included
+## ## 🔐 Projects Included
 
-### 1. Hospital Ransomware Incident – Case Study (Simulated)
-- Analyzed a ransomware attack scenario targeting a hospital environment.
-- Identified attack vectors, attack progression, and indicators of compromise (IOCs).
-- Documented detection, response, and prevention strategies.
-- Mapped attacker behavior to the MITRE ATT&CK framework.
+### 1. Incident Case Studies
+- [Hospital Ransomware Incident – Case Study](Incident-Case-Studies/Hospital-Ransomware-Case-Study.md)  
+  *Analyzed a ransomware attack scenario targeting a hospital, including attack progression, IOCs, detection, response, and MITRE ATT&CK mapping.*
 
-### 2. Tech Company Account Compromise – Case Study (Simulated)
-- Investigated an account compromise caused by credential stuffing.
-- Analyzed authentication abuse and unauthorized access patterns.
-- Documented SOC detection and response actions.
-- Mapped relevant MITRE ATT&CK techniques.
+- [Account Compromise Incident – Case Study](Incident-Case-Studies/Account-Compromise-Case-Study.md)  
+  *Investigated an account compromise caused by credential reuse and lack of MFA, focusing on detection, response, and prevention.*
 
-### 3. Manual Log Analysis – Automated Scanning Detection
-- Analyzed firewall, IDS, and application logs using spreadsheet-based techniques.
-- Established baseline behavior and identified abnormal automated scanning activity.
-- Correlated request paths, user agents, source IPs, and timing patterns.
-- Produced an analyst timeline, conclusions, and security recommendations.
+---
 
-### 4. Password Strength Checker – Python Security Automation
-- Developed a Python script to evaluate password strength based on security policy rules.
-- Implemented checks for password length, uppercase, lowercase, numeric, and special characters.
-- Classified passwords as weak, moderate, or strong based on defined criteria.
+### 2. Log Analysis
+- [Automated Scanning Detection – Log Analysis](Log-Analysis/Automated-Scanning-Detection.md)  
+  *Analyzed firewall, IDS, and application logs to identify automated reconnaissance and scanning activity.*
+
+---
+
+### 3. Python Security Scripts
+- [Password Strength Checker (Python)](Python-Security-Scripts/password_strength_checker.py)  
+  *Developed a Python script to evaluate password strength based on security policy rules.*
 
 ---
 
