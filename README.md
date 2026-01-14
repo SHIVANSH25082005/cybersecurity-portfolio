@@ -1,5 +1,3 @@
-# cybersecurity-portfolio
-Hands-on cybersecurity projects including incident analysis, log analysis, phishing investigation, and Python security automation.
 # Cybersecurity Portfolio
 
 This repository contains hands-on cybersecurity projects completed as part of my learning journey through the Google Cybersecurity Certificate and self-guided practical exercises.
