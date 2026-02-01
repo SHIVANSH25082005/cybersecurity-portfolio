@@ -1,0 +1,6 @@
+[HIGH] Account brute-force detected - admin targeted 3 times
+[HIGH] Account brute-force detected - admin targeted 3 times
+[HIGH] Account brute-force detected - admin targeted 3 times
+[HIGH] Account brute-force detected - admin targeted 6 times
+[HIGH] Account brute-force detected - admin targeted 6 times
+[CRITICAL] Coordinated brute-force detected: IP 1.1.1.1 targeting user admin (3 attempts in 30 seconds)
