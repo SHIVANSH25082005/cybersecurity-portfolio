@@ -1,0 +1,10 @@
+2026-02-01 10:32:14 INFO User admin logged in from 192.168.1.5
+2026-02-01 10:33:01 ERROR Failed login for user admin from 192.168.1.5
+2026-02-01 10:33:05 ERROR Failed login for user admin from 192.168.1.5
+2026-02-01 10:34:20 INFO User guest logged in from 10.0.0.2
+2026-02-01 10:35:01 ERROR Failed login for user admin from 192.168.1.5
+2026-02-01 10:33:01 ERROR Failed login for user admin from 1.1.1.1
+2026-02-01 10:33:10 ERROR Failed login for user admin from 1.1.1.1
+2026-02-01 10:33:20 ERROR Failed login for user admin from 1.1.1.1
+
+2026-02-01 10:34:55 ERROR Failed login for user root from 8.8.8.8
