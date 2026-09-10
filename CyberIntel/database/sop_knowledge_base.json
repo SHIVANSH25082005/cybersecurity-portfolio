@@ -1,0 +1,141 @@
+[
+  {
+    "id": "sop_online_banking",
+    "title": "Online Banking Fraud SOP",
+    "category": "cybercrime_workflows",
+    "description": "Standard operating procedure for investigating online banking fraud, phishing, and unauthorized money transfers.",
+    "target_case_types": ["Online Banking Fraud"],
+    "target_mo_categories": ["Online Banking Phishing"],
+    "steps": [
+      "Obtain the transaction details, including transaction ID, timestamp, and target account/UPI.",
+      "Send an immediate freeze request to the beneficiary bank or payment gateway using the official nodal email.",
+      "Request IPDR logs from the payment gateway to track the IP address used for the transaction.",
+      "Submit a domain takedown request if spoofed/phishing banking sites were identified.",
+      "Draft and issue a legal request under Section 91 CrPC (or equivalent local laws) to collect KYC documents."
+    ],
+    "legal_provisions": [
+      "Section 91 CrPC (Summons to produce document)",
+      "Section 66D IT Act (Cheating by personation)"
+    ],
+    "resources": [
+      "National Cyber Crime Reporting Portal (NCRP) Nodal Contact List",
+      "Draft Nodal Email Template for Bank Freeze"
+    ]
+  },
+  {
+    "id": "sop_investment_scam",
+    "title": "Investment & Crypto Scam SOP",
+    "category": "cybercrime_workflows",
+    "description": "Workflow for tracking high-yield investment scams, part-time task frauds, and cryptocurrency money laundering.",
+    "target_case_types": ["Crypto Scam", "Investment Scam"],
+    "target_mo_categories": ["Investment/Crypto Scam"],
+    "steps": [
+      "Identify the destination crypto wallet address and trace it using blockchain explorer tools (e.g., Etherscan, Tronscan).",
+      "Request transaction details and KYC documents from the relevant crypto exchanges where the wallets are registered.",
+      "Submit takedown requests for the fraudulent investment portal domain.",
+      "Liaise with Telegram support to block the promoter usernames/channels.",
+      "Track the beneficiary bank accounts associated with any intermediate fiat conversions."
+    ],
+    "legal_provisions": [
+      "Section 102 CrPC (Power of police officer to seize certain property)",
+      "Section 66D IT Act (Cheating by personation)"
+    ],
+    "resources": [
+      "Binance Nodal Portal Link",
+      "WazirX Law Enforcement Request Form"
+    ]
+  },
+  {
+    "id": "sop_loan_app",
+    "title": "Loan App Extortion SOP",
+    "category": "legal_procedures",
+    "description": "Procedures for mitigating harassment and extortion from illegal short-term lending mobile applications.",
+    "target_case_types": ["Loan App Scam"],
+    "target_mo_categories": ["Loan App Extortion"],
+    "steps": [
+      "Identify the rogue application package name and download URL.",
+      "Report the application to Google Play Store / Apple App Store for violation of developer policies.",
+      "Analyze the application's C2 server IP address and trace its hosting provider.",
+      "Trace the beneficiary UPI handles and bank accounts used to receive loan repayments.",
+      "Advise the victim to uninstall the app, secure their device, and notify their contacts about the fraud."
+    ],
+    "legal_provisions": [
+      "Section 384 IPC (Extortion)",
+      "Section 506 IPC (Criminal Intimidation)",
+      "Section 66D IT Act"
+    ],
+    "resources": [
+      "Google Play Console Abusive App Report Form",
+      "Leaked Loan App C2 Servers Database"
+    ]
+  },
+  {
+    "id": "sop_courier_scam",
+    "title": "Impersonation & Courier Scam SOP",
+    "category": "investigation_guides",
+    "description": "Guide on investigating parcel-related frauds and impersonation of police or customs officers.",
+    "target_case_types": ["Courier Scam"],
+    "target_mo_categories": ["Impersonation Courier Scam"],
+    "steps": [
+      "Identify the phone numbers and WhatsApp/Telegram accounts used by the fake officers.",
+      "Request Call Detail Records (CDR) and cell tower locations for the suspect phone numbers.",
+      "Submit official requests to the logistics company to verify the tracking number.",
+      "Track target accounts where the victim transferred money under fear of arrest.",
+      "Coordinate with local cyber cells to map caller location hotspots (e.g., Mewat, Jamtara)."
+    ],
+    "legal_provisions": [
+      "Section 419 IPC (Cheating by personation)",
+      "Section 170 IPC (Personating a public servant)",
+      "Section 66D IT Act"
+    ],
+    "resources": [
+      "FedEx Security Team Nodal Details",
+      "Customs Department Verification Portal"
+    ]
+  },
+  {
+    "id": "sop_kyc_scam",
+    "title": "KYC Update / SIM Swap SOP",
+    "category": "legal_procedures",
+    "description": "Standard operating procedure for investigating SIM swap frauds and update-impersonation scams.",
+    "target_case_types": ["KYC Verification Scam"],
+    "target_mo_categories": ["KYC Update Phishing"],
+    "steps": [
+      "Verify with the telecom operator if a SIM swap or duplicate SIM card issuance occurred.",
+      "Request the Customer Acquisition Form (CAF) and KYC documents submitted for the swapped SIM card.",
+      "Freeze the beneficiary e-wallets or bank accounts linked to the fraudulent transactions.",
+      "Submit takedown requests for spoofed KYC update portals.",
+      "Trace the location and device details used for SIM registration."
+    ],
+    "legal_provisions": [
+      "Section 420 IPC (Cheating)",
+      "Section 66C IT Act (Identity Theft)"
+    ],
+    "resources": [
+      "Jio/Airtel Nodal Officer CAF Request Form",
+      "National SIM Portal Verification List"
+    ]
+  },
+  {
+    "id": "sop_digital_evidence",
+    "title": "Digital Evidence Preservation Standard",
+    "category": "general_documentation",
+    "description": "General standards for seizing, acquiring, and preserving digital evidence in cybercrime investigations.",
+    "target_case_types": ["all"],
+    "target_mo_categories": [],
+    "steps": [
+      "Document the state of the device (On/Off) before touching it.",
+      "Use write-blockers when performing forensic acquisition of storage drives.",
+      "Calculate SHA256/MD5 hashes of the acquired forensic images immediately.",
+      "Label and store evidence in anti-static bags with a complete Chain of Custody log.",
+      "Avoid logging in to online profiles on suspect devices without proper network isolation."
+    ],
+    "legal_provisions": [
+      "Section 65B Indian Evidence Act (Admissibility of electronic records)"
+    ],
+    "resources": [
+      "Forensic Imaging Software Guide",
+      "Chain of Custody Standard Form Template"
+    ]
+  }
+]

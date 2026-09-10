@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Network Assessment</h1>
+        <p class="subtitle">Search Parameter: {{ search_value }}</p>
+    </div>
+</div>
+
+<!-- Network metrics summary -->
+<div class="stats-container">
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Connected Entities</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ connections|length }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Network Risk Level</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;" class="level-{{ risk_level|lower }}">{{ risk_level }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Total Complaints</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.complaints }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Total Indicators</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.indicators }}</h2>
+    </div>
+</div>
+
+<!-- Connected Complaints -->
+<div class="card">
+    <div class="card-header">
+        <h3>Discovered Coordinated Complaints Network</h3>
+    </div>
+    <div class="card-body">
+        {% if connections %}
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px;">
+            {% for record in connections %}
+            <div style="background-color: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 15px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px; margin-bottom: 10px;">
+                    <strong style="color: #fff;"><i class="fa-solid fa-folder-open" style="color: var(--primary); margin-right: 4px;"></i> {{ record[0] }}</strong>
+                    <span class="badge badge-info">Active</span>
+                </div>
+                <div style="display: flex; flex-direction: column; gap: 4px; font-size: 13px;">
+                    {% if record[2] %}
+                    <div><span style="color: var(--text-secondary);">Phone:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ record[2] }}</strong></div>
+                    {% endif %}
+                    
+                    {% if record[3] %}
+                    <div><span style="color: var(--text-secondary);">UPI ID:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ record[3] }}</strong></div>
+                    {% endif %}
+                    
+                    {% if record[4] %}
+                    <div><span style="color: var(--text-secondary);">Email:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ record[4] }}</strong></div>
+                    {% endif %}
+                    
+                    {% if record[5] %}
+                    <div><span style="color: var(--text-secondary);">Telegram:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ record[5] }}</strong></div>
+                    {% endif %}
+                    
+                    {% if record[6] %}
+                    <div><span style="color: var(--text-secondary);">Website:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ record[6] }}</strong></div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <p class="ws-msg">No connected complaint networks found.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% if graph_file %}
+
+<!-- Relationship Graph Spring -->
+<div class="visualization-panel">
+    <div class="visualization-header">
+        <div class="visualization-title">
+            <h3>Relationship Graph (Spring Layout)</h3>
+            <p>Static network topology visualization</p>
+        </div>
+        <div class="visualization-controls">
+            <a href="{{ url_for('static', filename='link_graph.png') }}" download="link_graph_spring.png" class="btn btn-sm btn-success"><i class="fa-solid fa-download"></i> Download PNG</a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; background: #0b0f19; padding: 20px; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
+        <img src="{{ url_for('static', filename='link_graph.png') }}" alt="Spring layout graph" style="max-width: 100%; height: auto; border-radius: var(--radius-md);"
+             onerror="this.style.display='none'; document.getElementById('spring-error').style.display='flex';">
+        <div id="spring-error" style="display:none; flex-direction: column; align-items: center; gap: 12px; color: var(--text-secondary);">
+            <i class="fa-solid fa-image-slash" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+            <p style="margin: 0; font-weight: 600; color: var(--text-primary);">Graph not yet generated</p>
+            <p style="margin: 0; font-size: 13px;">Run a link analysis search first to generate the spring layout graph.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Relationship Graph Concentric -->
+<div class="visualization-panel">
+    <div class="visualization-header">
+        <div class="visualization-title">
+            <h3>Relationship Graph (Concentric Layout)</h3>
+            <p>Static network orbit visualization</p>
+        </div>
+        <div class="visualization-controls">
+            <a href="{{ url_for('static', filename='link_graph_concentric.png') }}" download="link_graph_concentric.png" class="btn btn-sm btn-success"><i class="fa-solid fa-download"></i> Download PNG</a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; background: #0b0f19; padding: 20px; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
+        <img src="{{ url_for('static', filename='link_graph_concentric.png') }}" alt="Concentric layout graph" style="max-width: 100%; height: auto; border-radius: var(--radius-md);"
+             onerror="this.style.display='none'; document.getElementById('concentric-error').style.display='flex';">
+        <div id="concentric-error" style="display:none; flex-direction: column; align-items: center; gap: 12px; color: var(--text-secondary);">
+            <i class="fa-solid fa-image-slash" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+            <p style="margin: 0; font-weight: 600; color: var(--text-primary);">Graph not yet generated</p>
+            <p style="margin: 0; font-size: 13px;">Run a link analysis search first to generate the concentric layout graph.</p>
+        </div>
+    </div>
+</div>
+
+{% else %}
+<div class="empty-state">
+    <i class="fa-solid fa-image-slash"></i>
+    <h3>No graph visualization generated</h3>
+    <p>The graph files could not be generated for this search value.</p>
+</div>
+{% endif %}
+
+{% endblock %}

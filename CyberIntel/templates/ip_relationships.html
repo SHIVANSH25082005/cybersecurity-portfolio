@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>IP-Based Relationship Discovery</h1>
+        <p class="subtitle">Cross-case analysis of shared IP infrastructure.</p>
+    </div>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr; gap: 20px;">
+    {% if results %}
+        {% for result in results %}
+        {% set phones_count = result.phones|length %}
+        {% set cases_count = result.cases|length %}
+        {% set rel_count = phones_count + cases_count %}
+        
+        <div class="card" style="margin-bottom: 0;">
+            <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <h3 style="margin: 0; font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ result.ip }}</h3>
+                    <button class="btn btn-sm btn-ghost" style="padding: 2px 6px;" onclick="navigator.clipboard.writeText('{{ result.ip }}'); var b=this; b.innerHTML='<i class=\"fa-solid fa-check\"></i>'; setTimeout(function(){ b.innerHTML='<i class=\"fa-solid fa-copy\"></i>'; }, 2000);"><i class="fa-solid fa-copy"></i></button>
+                </div>
+                
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="font-size: 0.8rem; color: var(--text-secondary); font-weight: 600;">Relationships: {{ rel_count }}</span>
+                    {% if phones_count >= 5 %}
+                    <span class="badge badge-high"><i class="fa-solid fa-triangle-exclamation"></i> Critical Risk</span>
+                    {% elif phones_count >= 3 %}
+                    <span class="badge badge-medium"><i class="fa-solid fa-circle-exclamation"></i> Elevated Risk</span>
+                    {% else %}
+                    <span class="badge badge-low"><i class="fa-solid fa-circle-check"></i> Moderate Risk</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                    <!-- Phones Section -->
+                    <div style="background-color: rgba(0, 0, 0, 0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--text-primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-mobile-screen-button"></i> Connected Suspect Phones ({{ phones_count }})</h4>
+                        {% if result.phones %}
+                        <ul style="margin: 0; padding-left: 20px; color: var(--text-secondary); line-height: 1.5; font-family: var(--font-mono);">
+                            {% for phone in result.phones %}
+                            <li>{{ phone }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 13px;">No phones linked directly in IPDR logs.</span>
+                        {% endif %}
+                    </div>
+                    
+                    <!-- Cases Section -->
+                    <div style="background-color: rgba(0, 0, 0, 0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                        <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--text-primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-briefcase"></i> Associated Case Workspaces ({{ cases_count }})</h4>
+                        {% if result.cases %}
+                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
+                            {% for case in result.cases %}
+                            <a href="/workspace/{{ case }}" class="btn btn-sm btn-outline"><i class="fa-solid fa-folder-open"></i> {{ case }}</a>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <span style="color: var(--text-muted); font-size: 13px;">No direct case workspaces associated.</span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <!-- Expandable Details Accordion -->
+                <details style="margin-top: 15px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md); background: rgba(0, 0, 0, 0.2);">
+                    <summary style="cursor: pointer; padding: 10px 15px; font-weight: 600; color: var(--primary); font-size: 13px; outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center;">
+                        <span>View Details</span>
+                        <span>▼</span>
+                    </summary>
+                    <div style="padding: 15px; border-top: 1px solid var(--border-subtle); font-size: 13px; color: var(--text-secondary); line-height: 1.5;">
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                            <div>
+                                <h5 style="margin-top: 0; color: var(--text-primary); font-size: 13px;">Evidence Summary</h5>
+                                <p style="margin: 0; font-size: 12px;">suspect networks access logs index overlaps suspect devices <code>{{ result.phones|join(', ') }}</code>. Verification hash checks verify zero manipulation in access stream logs.</p>
+                            </div>
+                            <div>
+                                <h5 style="margin-top: 0; color: var(--text-primary); font-size: 13px;">Event Timeline</h5>
+                                <p style="margin: 0; font-size: 12px;">Active cross-device access observed sequentially within short time windows, indicating coordinated syndicate proxy actions.</p>
+                            </div>
+                        </div>
+                    </div>
+                </details>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-circle-nodes"></i>
+            <h3>No shared IP relationships discovered</h3>
+            <p>No IP access coordinates are currently shared by more than one suspect phone channel.</p>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

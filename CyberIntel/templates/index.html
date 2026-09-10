@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    .fancy-title {
+        font-family: var(--font-sans);
+        font-size: 3.6rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.15em;
+        background: linear-gradient(135deg, #38bdf8 0%, #3b82f6 45%, #a855f7 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        margin: 0;
+        padding-bottom: 2px;
+        display: inline-block;
+    }
+    
+    .fancy-subtitle {
+        font-family: var(--font-sans);
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.25em;
+        color: var(--text-secondary);
+        margin: 6px 0 0 0;
+        opacity: 0.8;
+    }
+</style>
+
+<div class="workspace-header" style="margin-bottom: 35px; justify-content: center; text-align: center;">
+    <div style="display: flex; flex-direction: column; align-items: center; width: 100%;">
+        <h1 class="fancy-title">CYBERINTEL</h1>
+        <p class="fancy-subtitle">Central Investigation Console</p>
+    </div>
+</div>
+
+
+
+<!-- Global Stats Row -->
+<div class="stats-container" style="margin-bottom: 25px;">
+    <div class="stat-card">
+        <div>
+            <span>Total Records</span>
+            <h2>{{ total_records }}</h2>
+        </div>
+        <small style="color: var(--primary); font-size: 1.25rem; margin-top: 10px;"><i class="fa-solid fa-database"></i></small>
+    </div>
+
+    <div class="stat-card">
+        <div>
+            <span>Phone Numbers</span>
+            <h2>{{ phone_count }}</h2>
+        </div>
+        <small style="color: var(--color-info); font-size: 1.25rem; margin-top: 10px;"><i class="fa-solid fa-mobile-screen-button"></i></small>
+    </div>
+
+    <div class="stat-card">
+        <div>
+            <span>UPI ID Accounts</span>
+            <h2>{{ upi_count }}</h2>
+        </div>
+        <small style="color: var(--color-medium); font-size: 1.25rem; margin-top: 10px;"><i class="fa-solid fa-credit-card"></i></small>
+    </div>
+
+    <div class="stat-card">
+        <div>
+            <span>Suspect Websites</span>
+            <h2>{{ website_count }}</h2>
+        </div>
+        <small style="color: var(--color-high); font-size: 1.25rem; margin-top: 10px;"><i class="fa-solid fa-globe"></i></small>
+    </div>
+
+    <div class="stat-card">
+        <div>
+            <span>Email Addresses</span>
+            <h2>{{ email_count }}</h2>
+        </div>
+        <small style="color: var(--primary); font-size: 1.25rem; margin-top: 10px;"><i class="fa-solid fa-envelope"></i></small>
+    </div>
+
+    <div class="stat-card">
+        <div>
+            <span>Telegram Handles</span>
+            <h2>{{ telegram_count }}</h2>
+        </div>
+        <small style="color: #38bdf8; font-size: 1.25rem; margin-top: 10px;"><i class="fa-brands fa-telegram"></i></small>
+    </div>
+</div>
+
+<!-- Prominent Global Search Bar -->
+<div class="card" style="margin-bottom: 25px; background: linear-gradient(135deg, rgba(30, 41, 59, 0.4) 0%, rgba(15, 23, 42, 0.7) 100%); border: 1px solid var(--primary); box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);">
+    <div class="card-body" style="padding: 25px;">
+        <h2 style="margin-top: 0; margin-bottom: 18px; color: #fff; font-size: 1.5rem;"><i class="fa-solid fa-magnifying-glass" style="color: var(--primary);"></i> Global Database Search</h2>
+        <form method="GET" action="/search" style="display: flex; gap: 12px; margin: 0;">
+            <div style="flex-grow: 1;">
+                <input type="text" name="q" placeholder="Enter suspect IP, Phone, UPI handle, Domain, Complainant name or Case ID..." style="width: 100%; height: 48px; padding: 10px 18px; font-size: 15px; background: rgba(0, 0, 0, 0.3); border: 1px solid var(--border-subtle); color: white; border-radius: var(--radius-md); outline: none; box-sizing: border-box;" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 48px; padding: 0 35px; font-size: 15px; display: flex; align-items: center; gap: 8px;"><i class="fa-solid fa-magnifying-glass"></i> Search Registry</button>
+        </form>
+    </div>
+</div>
+
+<!-- Dashboard Grid Rows -->
+<div style="display: flex; gap: 20px; flex-wrap: wrap; margin-top: 25px;">
+    <!-- Recent Cases Card -->
+    <div class="card" style="flex: 2; min-width: 450px; margin: 0;">
+        <div class="card-header">
+            <h3>Recent Cases</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if recent_cases %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Case Name</th>
+                            <th>Case Type</th>
+                            <th>Status</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for case in recent_cases %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ case[0] }}</td>
+                            <td><strong style="color: #fff;">{{ case[1] }}</strong></td>
+                            <td><span class="badge badge-muted" style="font-size: 11px;">{{ case[2] }}</span></td>
+                            <td>
+                                <span class="badge {% if case[4] == 'Closed' %}badge-success{% else %}badge-info{% endif %}" style="font-size: 11px;">
+                                    {{ case[4] }}
+                                </span>
+                            </td>
+                            <td>
+                                <a href="/workspace/{{ case[0]|urlencode }}" class="btn btn-outline btn-sm" style="padding: 4px 10px; font-size: 11px; text-decoration: none;">Workspace</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 30px;">
+                <i class="fa-solid fa-briefcase"></i>
+                <h3>No active cases found</h3>
+                <p>Register complaints and create cases to begin.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Quick Actions Card -->
+    <div class="card" style="flex: 1; min-width: 320px; margin: 0;">
+        <div class="card-header">
+            <h3>Quick Actions</h3>
+        </div>
+        <div class="card-body" style="display: flex; flex-direction: column; gap: 10px; padding: 20px;">
+            <a href="/complaint" class="btn btn-primary" style="justify-content: flex-start; text-decoration: none;">
+                <i class="fa-solid fa-file-invoice"></i> Register Citizen Complaint
+            </a>
+            <a href="/add_intelligence" class="btn btn-outline" style="justify-content: flex-start; color: #fff !important; border-color: var(--border-subtle); text-decoration: none;">
+                <i class="fa-solid fa-brain"></i> Add Intelligence Profile
+            </a>
+            <a href="/ipdr_upload" class="btn btn-outline" style="justify-content: flex-start; color: #fff !important; border-color: var(--border-subtle); text-decoration: none;">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Upload IPDR Spreadsheet
+            </a>
+            <a href="/link_analysis" class="btn btn-outline" style="justify-content: flex-start; color: #fff !important; border-color: var(--border-subtle); text-decoration: none;">
+                <i class="fa-solid fa-circle-nodes"></i> Entity Link Analysis Graph
+            </a>
+            <a href="/cases" class="btn btn-outline" style="justify-content: flex-start; color: #fff !important; border-color: var(--border-subtle); text-decoration: none;">
+                <i class="fa-solid fa-briefcase"></i> View All Case Files
+            </a>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

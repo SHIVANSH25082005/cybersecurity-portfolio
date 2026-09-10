@@ -1,0 +1,418 @@
+{% extends "base.html" %}
+
+{% block content %}
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.css" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.4.1/dist/MarkerCluster.Default.css" />
+
+<style>
+    .geo-container {
+        display: flex;
+        gap: 20px;
+        height: auto;
+        min-height: 800px;
+        align-items: stretch;
+    }
+    .geo-sidebar {
+        width: 320px;
+        flex-shrink: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        padding-right: 5px;
+    }
+    .geo-map-container {
+        flex-grow: 1;
+        position: relative;
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 1px solid var(--border-subtle);
+    }
+    #map {
+        width: 100%;
+        height: 100%;
+        background: #0b0f19;
+    }
+    .leaflet-tile-container img {
+        filter: invert(100%) hue-rotate(180deg) brightness(95%) contrast(90%);
+    }
+    .leaflet-bar a, .leaflet-control-layers {
+        background-color: #161f30 !important;
+        color: #cbd5e1 !important;
+        border: 1px solid var(--border-subtle) !important;
+    }
+    .leaflet-bar a:hover {
+        background-color: #202b3e !important;
+    }
+    .leaflet-popup-content-wrapper {
+        background-color: #161f30 !important;
+        color: #cbd5e1 !important;
+        border: 1px solid var(--border-subtle) !important;
+        border-radius: var(--radius-md);
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);
+    }
+    .leaflet-popup-tip {
+        background-color: #161f30 !important;
+        border: 1px solid var(--border-subtle) !important;
+    }
+    .leaflet-popup-content a {
+        color: var(--primary) !important;
+        font-weight: bold;
+        text-decoration: none;
+    }
+    .leaflet-popup-content a:hover {
+        text-decoration: underline;
+    }
+    .map-legend {
+        background: #161f30;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        padding: 10px 12px;
+        font-size: 11px;
+        color: #cbd5e1;
+        line-height: 1.6;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 4px;
+    }
+    .legend-color {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 1px solid rgba(255,255,255,0.2);
+    }
+    .map-search-control {
+        background: #161f30;
+        padding: 6px 10px;
+        border: 1px solid var(--border-subtle);
+        border-radius: var(--radius-sm);
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.3);
+    }
+    .map-search-control input {
+        border: none;
+        background: transparent;
+        color: white;
+        font-size: 12px;
+        outline: none;
+        width: 160px;
+    }
+</style>
+
+<div class="workspace-header" style="margin-bottom: 20px;">
+    <div>
+        <h1>Geo-spatial Intelligence</h1>
+        <p class="subtitle">Spatial analysis of investigation data.</p>
+    </div>
+</div>
+
+<div class="geo-container">
+    <aside class="geo-sidebar">
+        <!-- Stats Card -->
+        <section class="card" style="margin-bottom: 0;">
+            <div class="card-header">
+                <h3>Spatial Density</h3>
+            </div>
+            <div class="card-body" style="padding: 12px;">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 8px;">
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <span style="font-size: 18px; font-weight: 800; color: #3b82f6; display: block;">{{ stats.total_complaints }}</span>
+                        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Complaints</span>
+                    </div>
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <span style="font-size: 18px; font-weight: 800; color: #10b981; display: block;">{{ stats.total_intelligence }}</span>
+                        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">Intel Profiles</span>
+                    </div>
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <span style="font-size: 18px; font-weight: 800; color: #ef4444; display: block;">{{ stats.total_ipdr }}</span>
+                        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">IPDR Towers</span>
+                    </div>
+                    <div style="background: rgba(0, 0, 0, 0.2); padding: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); text-align: center;">
+                        <span style="font-size: 18px; font-weight: 800; color: #f59e0b; display: block;">{{ stats.missing_coords }}</span>
+                        <span style="font-size: 10px; color: var(--text-muted); text-transform: uppercase;">No Coords</span>
+                    </div>
+                </div>
+                
+                <div style="background: rgba(0, 0, 0, 0.2); padding: 8px; border-radius: var(--radius-sm); border: 1px solid var(--border-subtle); display: flex; justify-content: space-around; text-align: center; font-size: 11px;">
+                    <div><strong style="color: #fff;">{{ stats.countries }}</strong> <span style="color: var(--text-muted);">Countries</span></div>
+                    <div><strong style="color: #fff;">{{ stats.states }}</strong> <span style="color: var(--text-muted);">States</span></div>
+                    <div><strong style="color: #fff;">{{ stats.cities }}</strong> <span style="color: var(--text-muted);">Cities</span></div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Search Map Markers Card -->
+        <section class="card" style="margin-bottom: 0;">
+            <div class="card-header">
+                <h3>Search Map Markers</h3>
+            </div>
+            <div class="card-body" style="padding: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <input type="text" id="map-search-input" placeholder="Search map markers…" style="padding: 6px 8px; font-size: 12px; height: 32px; width: 100%; box-sizing: border-box; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); color: white; border-radius: var(--radius-sm); outline: none;">
+                </div>
+            </div>
+        </section>
+
+        <!-- Filters Card -->
+        <section class="card" style="margin-bottom: 0; display: flex; flex-direction: column;">
+            <div class="card-header">
+                <h3>Map Filters</h3>
+            </div>
+            <div class="card-body" style="padding: 12px;">
+                <form method="GET" action="/geo_spatial" style="margin-bottom: 0; display: flex; flex-direction: column; gap: 10px;">
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Case ID</label>
+                        <select name="case_id" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All Cases --</option>
+                            {% for c in options.cases %}
+                            <option value="{{ c }}" {% if filters.case_id == c %}selected{% endif %}>{{ c }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Entity Type</label>
+                        <select name="entity_type" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All Types --</option>
+                            {% for et in entity_types %}
+                            <option value="{{ et }}" {% if filters.entity_type == et %}selected{% endif %}>{{ et }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Risk Level</label>
+                        <select name="risk_level" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All Risks --</option>
+                            <option value="HIGH" {% if filters.risk_level == "HIGH" %}selected{% endif %}>High</option>
+                            <option value="MEDIUM" {% if filters.risk_level == "MEDIUM" %}selected{% endif %}>Medium</option>
+                            <option value="LOW" {% if filters.risk_level == "LOW" %}selected{% endif %}>Low</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Modus Operandi</label>
+                        <select name="modus_operandi" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All M.O.s --</option>
+                            {% for mo in mo_list %}
+                            <option value="{{ mo }}" {% if filters.modus_operandi == mo %}selected{% endif %}>{{ mo }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Country</label>
+                        <select name="country" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All Countries --</option>
+                            {% for co in options.countries %}
+                            <option value="{{ co }}" {% if filters.country == co %}selected{% endif %}>{{ co }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">State</label>
+                        <select name="state" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All States --</option>
+                            {% for st in options.states %}
+                            <option value="{{ st }}" {% if filters.state == st %}selected{% endif %}>{{ st }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">City</label>
+                        <select name="city" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                            <option value="">-- All Cities --</option>
+                            {% for ci in options.cities %}
+                            <option value="{{ ci }}" {% if filters.city == ci %}selected{% endif %}>{{ ci }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Date Added (From)</label>
+                        <input type="date" name="date_start" value="{{ filters.date_start }}" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                    </div>
+
+                    <div class="form-group">
+                        <label style="font-size: 11px;">Date Added (To)</label>
+                        <input type="date" name="date_end" value="{{ filters.date_end }}" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                    </div>
+
+                    <button type="submit" class="btn btn-sm btn-primary" style="width: 100%; margin-top: 10px;"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+                    <a href="/geo_spatial" class="btn btn-sm btn-outline" style="width: 100%; text-align: center; display: block; box-sizing: border-box; text-decoration: none;"><i class="fa-solid fa-filter-circle-xmark"></i> Clear Filters</a>
+                </form>
+            </div>
+        </section>
+    </aside>
+
+    <div class="geo-map-container">
+        <div id="map"></div>
+    </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.4.1/dist/leaflet.markercluster.js"></script>
+<script src="https://unpkg.com/leaflet.heat@0.2.0/dist/leaflet-heat.js"></script>
+
+<!-- Leaflet interactive map script (Preserved) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var rawMarkers = {{ markers|tojson }};
+    
+    var defaultCenter = [20.5937, 78.9629];
+    if (rawMarkers.length > 0) {
+        var sumLat = 0, sumLng = 0;
+        rawMarkers.forEach(function(m) {
+            sumLat += m.lat;
+            sumLng += m.lng;
+        });
+        defaultCenter = [sumLat / rawMarkers.length, sumLng / rawMarkers.length];
+    }
+    
+    var map = L.map('map', {
+        center: defaultCenter,
+        zoom: 5,
+        zoomControl: false
+    });
+    
+    L.control.zoom({ position: 'topright' }).addTo(map);
+
+    var baseLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 18,
+        attribution: '© OpenStreetMap contributors'
+    }).addTo(map);
+
+    var FullscreenControl = L.Control.extend({
+        options: { position: 'topright' },
+        onAdd: function() {
+            var container = L.DomUtil.create('div', 'leaflet-bar');
+            var button = L.DomUtil.create('a', '', container);
+            button.innerHTML = '⛶';
+            button.title = 'Toggle Fullscreen';
+            button.href = '#';
+            button.style.fontSize = '18px';
+            button.style.lineHeight = '30px';
+            button.style.textAlign = 'center';
+            button.style.fontWeight = 'bold';
+            
+            L.DomEvent.on(button, 'click', function(e) {
+                L.DomEvent.stop(e);
+                var mapContainer = document.querySelector(".geo-map-container");
+                if (!document.fullscreenElement) {
+                    mapContainer.requestFullscreen().catch(function(err) {
+                        alert("Error entering fullscreen: " + err.message);
+                    });
+                } else {
+                    document.exitFullscreen();
+                }
+            });
+            return container;
+        }
+    });
+    map.addControl(new FullscreenControl());
+
+    var colors = {
+        "blue": "#3b82f6",
+        "green": "#10b981",
+        "red": "#ef4444"
+    };
+    
+    function createCircleMarker(latlng, color) {
+        return L.circleMarker(latlng, {
+            radius: 8,
+            fillColor: color,
+            color: "#ffffff",
+            weight: 1.5,
+            opacity: 1,
+            fillOpacity: 0.8
+        });
+    }
+
+    var markerCluster = L.markerClusterGroup({
+        maxClusterRadius: 50,
+        showCoverageOnHover: false
+    });
+    
+    var heatPoints = [];
+
+    rawMarkers.forEach(function(m) {
+        var latlng = [m.lat, m.lng];
+        heatPoints.push([m.lat, m.lng, 0.5]);
+
+        var popupContent = '<div>' +
+            '<h4 style="margin: 0 0 5px 0; color:#3b82f6; font-size:13px;">' + m.label + '</h4>' +
+            '<p style="margin: 0 0 10px 0; font-size:11px; line-height:15px; color:#cbd5e1;">' + m.details + '</p>' +
+            '<a href="' + m.link + '" target="_self">View Details →</a>' +
+            '</div>';
+
+        var circle = createCircleMarker(latlng, colors[m.color] || "#3b82f6")
+            .bindPopup(popupContent);
+            
+        markerCluster.addLayer(circle);
+    });
+
+    map.addLayer(markerCluster);
+
+    var heatLayer = L.heatLayer(heatPoints, {
+        radius: 25,
+        blur: 15,
+        maxZoom: 17,
+        gradient: { 0.4: 'blue', 0.6: 'cyan', 0.7: 'lime', 0.8: 'yellow', 1.0: 'red' }
+    });
+
+    var overlayMaps = {
+        "Marker Clusters": markerCluster,
+        "Density Heatmap": heatLayer
+    };
+    
+    L.control.layers(null, overlayMaps, {
+        position: 'topright',
+        collapsed: false
+    }).addTo(map);
+
+    var LegendControl = L.Control.extend({
+        options: { position: 'bottomleft' },
+        onAdd: function() {
+            var div = L.DomUtil.create('div', 'map-legend');
+            div.innerHTML = '<strong>LEGEND</strong>' +
+                '<div class="legend-item"><span class="legend-color" style="background:#3b82f6;"></span> Complaints</div>' +
+                '<div class="legend-item"><span class="legend-color" style="background:#10b981;"></span> Intel Profiles</div>' +
+                '<div class="legend-item"><span class="legend-color" style="background:#ef4444;"></span> IPDR Cell Towers</div>';
+            return div;
+        }
+    });
+    map.addControl(new LegendControl());
+
+    var searchInput = document.getElementById("map-search-input");
+    if (searchInput) {
+        searchInput.addEventListener("input", function() {
+            var query = searchInput.value.trim().toLowerCase();
+            markerCluster.clearLayers();
+            
+            rawMarkers.forEach(function(m) {
+                var labelMatch = m.label.toLowerCase().indexOf(query) !== -1;
+                var detailsMatch = m.details.toLowerCase().indexOf(query) !== -1;
+                
+                if (labelMatch || detailsMatch) {
+                    var latlng = [m.lat, m.lng];
+                    var popupContent = '<div>' +
+                        '<h4 style="margin: 0 0 5px 0; color:#3b82f6; font-size:13px;">' + m.label + '</h4>' +
+                        '<p style="margin: 0 0 10px 0; font-size:11px; line-height:15px; color:#cbd5e1;">' + m.details + '</p>' +
+                        '<a href="' + m.link + '" target="_self">View Details →</a>' +
+                        '</div>';
+                    var circle = createCircleMarker(latlng, colors[m.color] || "#3b82f6")
+                        .bindPopup(popupContent);
+                    markerCluster.addLayer(circle);
+                }
+            });
+        });
+    }
+});
+</script>
+
+{% endblock %}

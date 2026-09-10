@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>IPDR Records</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Log Entries Directory</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if records %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Entry ID</th>
+                        <th>suspect Phone Number</th>
+                        <th>Accessed IP Address</th>
+                        <th>Access Timestamp</th>
+                        <th>Associated Cell Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for record in records %}
+                    <tr>
+                        <td style="font-family: var(--font-mono);">{{ record[0] }}</td>
+                        <td><strong style="font-family: var(--font-mono); color: #fff;">{{ record[1] }}</strong></td>
+                        <td><strong style="font-family: var(--font-mono); color: #fff;">{{ record[2] }}</strong></td>
+                        <td style="font-family: var(--font-mono); font-size: 13px;">{{ record[3] }}</td>
+                        <td><i class="fa-solid fa-location-dot" style="color: var(--color-high); font-size: 0.8rem; margin-right: 5px;"></i>{{ record[4] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-rectangle-list"></i>
+            <p>No IPDR records ingested.</p>
+            <a href="/ipdr_upload" class="btn btn-primary btn-sm">Upload IPDR File</a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

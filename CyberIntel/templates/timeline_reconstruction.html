@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Timeline Reconstruction</h1>
+        <p class="subtitle">Chronological map of suspect actions and events.</p>
+    </div>
+</div>
+
+<div class="card" style="max-width: 600px; margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Select Case File</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" style="flex-direction: row; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 0;">
+            <div class="form-group" style="flex: 1; min-width: 250px;">
+                <label>Active Case File</label>
+                <select name="case_id" class="select-enterprise">
+                    {% for case in cases %}
+                    <option value="{{ case.case_id }}" {% if selected_case == case.case_id %}selected{% endif %}>
+                        {{ case.case_id }} - {{ case.case_name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 40px;"><i class="fa-solid fa-clock-rotate-left"></i> Generate Timeline</button>
+        </form>
+    </div>
+</div>
+
+{% if timeline %}
+
+<!-- Narrative Summary Panel -->
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Narrative Chronology Summary</h3>
+    </div>
+    <div class="card-body" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-secondary);">
+        {% for p in summary_data.paragraphs %}
+        <p style="margin-bottom: 15px; text-align: justify;">{{ p }}</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Timeline Summary Stats -->
+<div class="stats-container" style="margin-bottom: 25px;">
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Total Events</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.total_events }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Unique IPs</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.unique_ips }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Unique Locations</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.unique_locations }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Geo Transitions</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.transitions }}</h2>
+    </div>
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Extracted Entities</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;">{{ summary.entities }}</h2>
+    </div>
+</div>
+
+<!-- Chronological Timeline Display -->
+<div class="card">
+    <div class="card-header">
+        <h3>Reconstruction Chronology: {{ selected_case }}</h3>
+    </div>
+    <div class="card-body">
+        <div class="timeline-container">
+            {% for event in timeline %}
+            {% set event_title_lower = event.title|lower %}
+            {% set node_class = "" %}
+            {% set icon_class = "fa-circle-info" %}
+            
+            {% if "complaint" in event_title_lower %}
+                {% set node_class = "milestone" %}
+                {% set icon_class = "fa-file-invoice" %}
+            {% elif "transition" in event_title_lower or "gps" in event_title_lower or "tower" in event_title_lower %}
+                {% set icon_class = "fa-map-location-dot" %}
+            {% elif "ipdr" in event_title_lower or "access" in event_title_lower %}
+                {% set icon_class = "fa-mobile-screen-button" %}
+            {% elif "case" in event_title_lower or "create" in event_title_lower %}
+                {% set node_class = "critical" %}
+                {% set icon_class = "fa-folder-plus" %}
+            {% endif %}
+            
+            <div class="timeline-node {{ node_class }}">
+                <div class="timeline-time"><i class="fa-regular fa-calendar-days"></i> {{ event.timestamp }}</div>
+                <div class="timeline-title">
+                    <i class="fa-solid {{ icon_class }}" style="color: var(--primary); margin-right: 6px;"></i>
+                    {{ event.title }}
+                </div>
+                <div class="timeline-desc">{{ event.details }}</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>
+
+{% endif %}
+
+{% endblock %}

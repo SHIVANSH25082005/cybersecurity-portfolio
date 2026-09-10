@@ -1,0 +1,67 @@
+INSTALLATION AND SETUP INSTRUCTIONS
+
+1. Install Python 3.10 or later.
+
+2. Extract the complete project folder.
+
+3. Open Command Prompt / Terminal and navigate to the project directory:
+
+   cd CyberIntelPlatform
+
+4. (Recommended) Create a virtual environment:
+
+   python -m venv venv
+
+5. Activate the virtual environment:
+
+   Windows:
+   venv\Scripts\activate
+
+   Linux/Mac:
+   source venv/bin/activate
+
+6. Install required packages:
+
+   pip install -r requirements.txt
+
+7. Ensure the following folders exist:
+
+   database/
+   uploads/
+   templates/
+   static/
+
+8. Ensure the database file exists:
+
+   database/cyberintel.db
+
+9. Start the application:
+
+   python app.py
+
+10. Open a browser and visit:
+
+   http://127.0.0.1:5000
+
+
+IMPORTANT NOTES
+
+• The platform uses SQLite and stores all data in:
+  database/cyberintel.db
+
+• All complaints, cases, entities, IPDR records, correlations,
+  risk scores, and timeline reconstruction data are already
+  stored in the database file.
+
+• No additional database setup is required.
+
+• Do not delete or modify the database folder.
+
+• Keep the uploads folder if original uploaded IPDR Excel files
+  need to be preserved.
+
+• The entire project folder must be copied together to ensure
+  proper functionality.
+
+• If the platform starts successfully, all existing data and
+  analysis results will be available automatically.

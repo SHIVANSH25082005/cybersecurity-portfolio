@@ -1,0 +1,420 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Intelligence Fusion Engine</h1>
+        <p class="subtitle">Interactive intelligence network</p>
+    </div>
+</div>
+
+<div class="fusion-wrap">
+
+    <aside class="fusion-controls" style="display: flex; flex-direction: column; gap: 15px; border-right: 1px solid var(--border-subtle); padding-right: 20px;">
+
+        <div>
+            <h3 style="margin-top: 0;">Target Node Search</h3>
+            <input type="text" id="fusion-search" placeholder="Case, phone, IP, UPI, email…" autocomplete="off" style="width: 100%; box-sizing: border-box;">
+            <div id="fusion-results" class="fusion-results" style="margin-top: 5px;"></div>
+        </div>
+
+        <div>
+            <h3>Confidence threshold ≥ <span id="fusion-conf-value" style="color: var(--primary);">0</span>%</h3>
+            <input type="range" id="fusion-confidence" min="0" max="100" step="5" value="0" class="fusion-range" style="width: 100%;">
+        </div>
+
+        <div>
+            <h3>Entity Type Filter</h3>
+            <div class="fusion-filters" style="display: flex; flex-direction: column; gap: 6px;">
+                {% for type in entity_types %}
+                <label class="fusion-filter" style="display: flex; align-items: center; gap: 8px; font-size: 13px; cursor: pointer; color: var(--text-secondary);">
+                    <input type="checkbox" class="fusion-type" value="{{ type }}" checked style="width: auto; margin: 0;">
+                    {{ type }}
+                </label>
+                {% endfor %}
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 8px; margin-top: 10px;">
+            <button type="button" id="fusion-reset" class="btn btn-sm btn-outline" style="flex: 1;"><i class="fa-solid fa-trash-can"></i> Reset</button>
+            <button type="button" id="fusion-reset-view" class="btn btn-sm btn-outline" style="flex: 1;"><i class="fa-solid fa-compress"></i> Recenter</button>
+        </div>
+        <p style="font-size: 11px; color: var(--text-muted); line-height: 1.4; margin: 0;">Scroll wheel to zoom · click and drag to pan layout · drag individual nodes to position.</p>
+
+        <div id="fusion-info" class="fusion-info" style="margin-top: 15px; padding: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+            <p class="ws-msg" style="margin: 0; font-size: 12px; text-align: center; color: var(--text-muted);">No node selected.</p>
+        </div>
+    </aside>
+
+    <div class="fusion-canvas" style="position: relative; background-color: #0b0f19; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); overflow: hidden;">
+        <button id="fusion-fullscreen" class="btn btn-sm btn-outline" style="position: absolute; top: 12px; right: 120px; z-index: 100; border-color: rgba(255,255,255,0.25); background: rgba(15, 23, 42, 0.85);"><i class="fa-solid fa-expand"></i> Fullscreen</button>
+        <button id="fusion-export-png" class="btn btn-sm btn-outline" style="position: absolute; top: 12px; right: 12px; z-index: 100; border-color: rgba(255,255,255,0.25); background: rgba(15, 23, 42, 0.85);"><i class="fa-solid fa-download"></i> Export PNG</button>
+        
+        <svg id="fusion-svg" viewBox="0 0 1000 700" preserveAspectRatio="xMidYMid meet" style="width: 100%; height: 100%; display: block;"></svg>
+        <div id="fusion-empty" class="fusion-empty" style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; pointer-events: none;">
+            <i class="fa-solid fa-circle-nodes" style="font-size: 2.5rem; color: var(--text-muted); margin-bottom: 10px; display: block;"></i>
+            <span style="color: var(--text-muted); font-size: 14px; font-weight: 500;">Search and select an entity to begin building the graph network</span>
+        </div>
+    </div>
+
+</div>
+
+<!-- SVG Interaction Javascript (Preserved exactly) -->
+<script>
+(function () {
+
+    var TYPE_COLORS = {
+        "Case": "#2563eb", "Complaint": "#f59e0b", "Phone": "#10b981",
+        "Email": "#a855f7", "UPI": "#14b8a6", "Telegram": "#0ea5e9",
+        "Website": "#94a3b8", "IP": "#f87171", "Evidence": "#eab308",
+        "Investigator": "#ec4899", "BankAccount": "#22c55e",
+        "Wallet": "#84cc16", "IMEI": "#fb923c"
+    };
+
+    var SVG_W = 1000, SVG_H = 700;
+    var svg = document.getElementById("fusion-svg");
+    var emptyMsg = document.getElementById("fusion-empty");
+
+    var nodes = {};   // id -> node {id,type,value,label,x,y,depth,cluster,...}
+    var edges = {};   // "src|tgt" -> {source,target,relation,confidence}
+    var confidenceMin = 0;
+    var hiddenTypes = {};
+    var view = { k: 1, tx: 0, ty: 0 };   // zoom + pan state for the viewport <g>
+
+    function transformStr() {
+        return "translate(" + view.tx + "," + view.ty + ") scale(" + view.k + ")";
+    }
+
+    function applyTransform() {
+        var g = document.getElementById("fusion-vp");
+        if (g) { g.setAttribute("transform", transformStr()); }
+    }
+
+    function esc(v) {
+        return String(v == null ? "" : v)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function typesParam() {
+        var active = [];
+        document.querySelectorAll(".fusion-type").forEach(function (cb) {
+            if (cb.checked) { active.push(cb.value); }
+        });
+        return active.join(",");
+    }
+
+    function addNode(n, x, y, depth) {
+        if (nodes[n.id]) { return nodes[n.id]; }
+        n.x = x; n.y = y; n.depth = depth;
+        nodes[n.id] = n;
+        return n;
+    }
+
+    function addEdge(e) {
+        var key = e.source + "|" + e.target;
+        if (!edges[key]) { edges[key] = e; }
+    }
+
+    function placeAround(cx, cy, count, index, radius) {
+        var angle = (2 * Math.PI * index) / Math.max(count, 1);
+        return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    }
+
+    function fetchNeighbors(type, value, cb) {
+        var url = "/fusion/api/neighbors?type=" + encodeURIComponent(type) +
+            "&value=" + encodeURIComponent(value) +
+            "&confidence_min=" + confidenceMin +
+            "&types=" + encodeURIComponent(typesParam());
+        fetch(url).then(function (r) { return r.json(); }).then(cb)
+            .catch(function () {});
+    }
+
+    function seed(node) {
+        nodes = {}; edges = {};
+        addNode(node, SVG_W / 2, SVG_H / 2, 0);
+        expand(node);
+    }
+
+    function expand(node) {
+        if (node.cluster) {
+            var parent = nodes[node.parent_type + ":" + node.parent_value];
+            fetchClusterMembers(node, parent || node);
+            return;
+        }
+        fetchNeighbors(node.type, node.value, function (data) {
+            var others = (data.nodes || []).filter(function (n) { return n.id !== node.id; });
+            var depth = (node.depth || 0) + 1;
+            var radius = Math.max(90, 220 - depth * 30);
+            others.forEach(function (n, i) {
+                var p = placeAround(node.x, node.y, others.length, i, radius);
+                addNode(n, p.x, p.y, depth);
+            });
+            (data.edges || []).forEach(addEdge);
+            render();
+            showInfo(node, others.length);
+        });
+    }
+
+    function fetchClusterMembers(clusterNode, parent) {
+        var url = "/fusion/api/neighbors?type=" + encodeURIComponent(clusterNode.parent_type) +
+            "&value=" + encodeURIComponent(clusterNode.parent_value) +
+            "&limit=200&confidence_min=" + confidenceMin +
+            "&types=" + encodeURIComponent(clusterNode.cluster_type);
+        fetch(url).then(function (r) { return r.json(); }).then(function (data) {
+            delete nodes[clusterNode.id];
+            var members = (data.nodes || []).filter(function (n) {
+                return n.id !== data.center && !n.cluster;
+            });
+            var depth = (parent.depth || 0) + 1;
+            members.forEach(function (n, i) {
+                var p = placeAround(parent.x, parent.y, members.length, i, 240);
+                addNode(n, p.x, p.y, depth);
+            });
+            (data.edges || []).forEach(addEdge);
+            render();
+        }).catch(function () {});
+    }
+
+    function visible(node) {
+        return !hiddenTypes[node.type];
+    }
+
+    function render() {
+        var ids = Object.keys(nodes);
+        emptyMsg.style.display = ids.length ? "none" : "block";
+
+        var parts = [];
+
+        Object.keys(edges).forEach(function (key) {
+            var e = edges[key];
+            if (e.confidence < confidenceMin) { return; }
+            var a = nodes[e.source], b = nodes[e.target];
+            if (!a || !b || !visible(a) || !visible(b)) { return; }
+            parts.push('<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x +
+                '" y2="' + b.y + '" stroke="#475569" stroke-width="1"/>');
+        });
+
+        var q = searchBox.value.trim().toLowerCase();
+
+        ids.forEach(function (id) {
+            var n = nodes[id];
+            if (!visible(n)) { return; }
+            var color = TYPE_COLORS[n.type] || "#64748b";
+            var r = n.depth === 0 ? 13 : (n.cluster ? 9 : 8);
+            var label = String(n.label || n.value || "");
+            if (label.length > 22) { label = label.slice(0, 21) + "…"; }
+            
+            var highlight = q && (n.value.toLowerCase().includes(q) || label.toLowerCase().includes(q));
+            var stroke = highlight ? ' stroke="#ffffff" stroke-width="3"' : (n.cluster ? ' stroke="#e2e8f0" stroke-dasharray="3,2"' : '');
+            
+            parts.push('<g class="fusion-node" data-id="' + esc(id) + '" style="cursor:pointer">');
+            parts.push('<title>' + esc(n.type) + ': ' + esc(n.value) + '</title>');
+            parts.push('<circle cx="' + n.x + '" cy="' + n.y + '" r="' + r +
+                '" fill="' + color + '"' + stroke + '/>');
+            parts.push('<text x="' + (n.x + r + 4) + '" y="' + (n.y + 4) +
+                '" font-size="11" fill="#e2e8f0">' + esc(label) + '</text>');
+            parts.push('</g>');
+        });
+
+        svg.innerHTML = '<g id="fusion-vp" transform="' + transformStr() + '">' +
+            parts.join("") + '</g>';
+
+        svg.querySelectorAll(".fusion-node").forEach(function (g) {
+            g.addEventListener("click", function () {
+                if (panState.moved) { return; }
+                var node = nodes[g.getAttribute("data-id")];
+                if (node) { expand(node); }
+            });
+
+            g.addEventListener("mousedown", function (e) {
+                e.stopPropagation();
+                dragId = g.getAttribute("data-id");
+                var rect = svg.getBoundingClientRect();
+                var clickX = (e.clientX - rect.left) / rect.width * SVG_W;
+                var clickY = (e.clientY - rect.top) / rect.height * SVG_H;
+                var n = nodes[dragId];
+                dragOffset.x = (clickX - view.tx) / view.k - n.x;
+                dragOffset.y = (clickY - view.ty) / view.k - n.y;
+            });
+        });
+    }
+
+    var dragId = null;
+    var dragOffset = { x: 0, y: 0 };
+    var panState = { dragging: false, sx: 0, sy: 0, moved: false };
+
+    svg.addEventListener("wheel", function (e) {
+        e.preventDefault();
+        var rect = svg.getBoundingClientRect();
+        if (!rect.width || !rect.height) { return; }
+        var px = (e.clientX - rect.left) / rect.width * SVG_W;
+        var py = (e.clientY - rect.top) / rect.height * SVG_H;
+        var factor = e.deltaY < 0 ? 1.1 : 0.9;
+        var newK = Math.min(4, Math.max(0.3, view.k * factor));
+        view.tx = px - (px - view.tx) * (newK / view.k);
+        view.ty = py - (py - view.ty) * (newK / view.k);
+        view.k = newK;
+        applyTransform();
+    }, { passive: false });
+
+    svg.addEventListener("mousedown", function (e) {
+        panState.dragging = true;
+        panState.moved = false;
+        panState.sx = e.clientX;
+        panState.sy = e.clientY;
+        svg.style.cursor = "grabbing";
+    });
+
+    svg.addEventListener("mousemove", function (e) {
+        var rect = svg.getBoundingClientRect();
+        if (!rect.width || !rect.height) { return; }
+        
+        if (dragId) {
+            var clickX = (e.clientX - rect.left) / rect.width * SVG_W;
+            var clickY = (e.clientY - rect.top) / rect.height * SVG_H;
+            var n = nodes[dragId];
+            n.x = (clickX - view.tx) / view.k - dragOffset.x;
+            n.y = (clickY - view.ty) / view.k - dragOffset.y;
+            panState.moved = true;
+            render();
+        } else if (panState.dragging) {
+            if (Math.abs(e.clientX - panState.sx) > 3 ||
+                Math.abs(e.clientY - panState.sy) > 3) { panState.moved = true; }
+            view.tx += (e.clientX - panState.sx) / rect.width * SVG_W;
+            view.ty += (e.clientY - panState.sy) / rect.height * SVG_H;
+            panState.sx = e.clientX;
+            panState.sy = e.clientY;
+            applyTransform();
+        }
+    });
+
+    window.addEventListener("mouseup", function () {
+        dragId = null;
+        panState.dragging = false;
+        svg.style.cursor = "grab";
+    });
+
+    svg.style.cursor = "grab";
+
+    function showInfo(node, count) {
+        var info = document.getElementById("fusion-info");
+        info.innerHTML = '<p style="margin: 0 0 5px 0; color: var(--primary);"><strong>' + esc(node.type) + '</strong></p>' +
+            '<p style="margin: 0 0 10px 0; font-family: var(--font-mono); color: #fff; font-size: 13px; word-break: break-all;">' + esc(node.value) + '</p>' +
+            '<p style="margin: 0; font-size: 12px; color: var(--text-secondary);">' + count + ' direct relations loaded.</p>';
+    }
+
+    var searchBox = document.getElementById("fusion-search");
+    var resultsBox = document.getElementById("fusion-results");
+    var searchTimer = null;
+
+    searchBox.addEventListener("input", function () {
+        var q = searchBox.value.trim().toLowerCase();
+        if (searchTimer) { clearTimeout(searchTimer); }
+        if (q.length < 2) { resultsBox.innerHTML = ""; return; }
+        searchTimer = setTimeout(function () {
+            var matchedNode = null;
+            Object.keys(nodes).forEach(function(id) {
+                var n = nodes[id];
+                if (n.value.toLowerCase().includes(q)) {
+                    matchedNode = n;
+                }
+            });
+            if (matchedNode) {
+                view.tx = SVG_W / 2 - matchedNode.x * view.k;
+                view.ty = SVG_H / 2 - matchedNode.y * view.k;
+                applyTransform();
+            }
+            render();
+
+            fetch("/fusion/api/search?q=" + encodeURIComponent(q))
+                .then(function (r) { return r.json(); })
+                .then(function (items) {
+                    if (!items.length) { resultsBox.innerHTML = '<p class="ws-msg" style="padding: 5px;">No matches found.</p>'; return; }
+                    resultsBox.innerHTML = items.map(function (it) {
+                        return '<div class="fusion-result" data-type="' + esc(it.type) +
+                            '" data-value="' + esc(it.value) + '" style="padding: 8px 10px; cursor: pointer; border-bottom: 1px solid var(--border-subtle); font-size: 12px;"><span class="badge" style="margin-right: 6px;">' +
+                            esc(it.type) + '</span> ' + esc(it.label) + '</div>';
+                    }).join("");
+                    resultsBox.querySelectorAll(".fusion-result").forEach(function (el) {
+                        el.addEventListener("click", function () {
+                            seed({ id: el.dataset.type + ":" + el.dataset.value,
+                                   type: el.dataset.type, value: el.dataset.value,
+                                   label: el.dataset.value });
+                            resultsBox.innerHTML = "";
+                            searchBox.value = el.dataset.value;
+                        });
+                    });
+                }).catch(function () {});
+        }, 200);
+    });
+
+    var slider = document.getElementById("fusion-confidence");
+    slider.addEventListener("input", function () {
+        confidenceMin = parseInt(slider.value, 10) || 0;
+        document.getElementById("fusion-conf-value").textContent = confidenceMin;
+        render();
+    });
+
+    document.querySelectorAll(".fusion-type").forEach(function (cb) {
+        cb.addEventListener("change", function () {
+            hiddenTypes[cb.value] = !cb.checked;
+            render();
+        });
+    });
+
+    document.getElementById("fusion-reset").addEventListener("click", function () {
+        nodes = {}; edges = {};
+        view.k = 1; view.tx = 0; view.ty = 0;
+        document.getElementById("fusion-info").innerHTML = '<p class="ws-msg" style="margin: 0; font-size: 12px; text-align: center; color: var(--text-muted);">No node selected.</p>';
+        render();
+    });
+
+    document.getElementById("fusion-reset-view").addEventListener("click", function () {
+        view.k = 1; view.tx = 0; view.ty = 0;
+        applyTransform();
+    });
+
+    document.getElementById("fusion-fullscreen").addEventListener("click", function () {
+        var canvas = document.querySelector(".fusion-canvas");
+        if (!document.fullscreenElement) {
+            canvas.requestFullscreen().catch(function(err) {
+                alert("Error entering fullscreen: " + err.message);
+            });
+        } else {
+            document.exitFullscreen();
+        }
+    });
+
+    document.getElementById("fusion-export-png").addEventListener("click", function () {
+        var svgString = new XMLSerializer().serializeToString(svg);
+        var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+        var URL = window.URL || window.webkitURL || window;
+        var blobURL = URL.createObjectURL(svgBlob);
+        var image = new Image();
+        image.onload = function () {
+            var canvas = document.createElement("canvas");
+            canvas.width = SVG_W;
+            canvas.height = SVG_H;
+            var context = canvas.getContext("2d");
+            context.fillStyle = "#0b0f19";
+            context.fillRect(0, 0, canvas.width, canvas.height);
+            context.drawImage(image, 0, 0);
+            
+            var png = canvas.toDataURL("image/png");
+            var downloadLink = document.createElement("a");
+            downloadLink.href = png;
+            downloadLink.download = "fusion_graph.png";
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        };
+        image.src = blobURL;
+    });
+
+    render();
+
+})();
+</script>
+
+{% endblock %}

@@ -1,0 +1,3 @@
+--- Mock Evidence File Content ---
+Name: whatsapp_chat_export.txt
+Description: Victim device chat communications log export containing blackmail demand details.

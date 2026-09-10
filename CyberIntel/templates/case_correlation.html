@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Case-to-Case Correlation</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Discovered Case Correlations</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if results %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 15%;">Case A</th>
+                        <th style="width: 15%;">Case B</th>
+                        <th style="width: 25%;">Correlation Strength</th>
+                        <th style="width: 45%;">Discovered Indicators &amp; Reasoning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td>
+                            <a class="ws-link" href="/workspace/{{ row.case1 }}">{{ row.case1 }}</a>
+                        </td>
+                        <td>
+                            <a class="ws-link" href="/workspace/{{ row.case2 }}">{{ row.case2 }}</a>
+                        </td>
+                        <td>
+                            <div style="display: flex; flex-direction: column; gap: 6px;">
+                                <div style="display: flex; align-items: center; gap: 8px;">
+                                    {% if row.strength >= 70 %}
+                                        <span class="badge badge-high"><i class="fa-solid fa-circle-exclamation"></i> Strong</span>
+                                    {% elif row.strength >= 40 %}
+                                        <span class="badge badge-medium"><i class="fa-solid fa-triangle-exclamation"></i> Moderate</span>
+                                    {% else %}
+                                        <span class="badge badge-low"><i class="fa-solid fa-circle-check"></i> Weak</span>
+                                    {% endif %}
+                                    <strong style="color: #fff;">{{ row.strength }}%</strong>
+                                </div>
+                                <div class="progress-bar-container" style="width: 120px; height: 6px; margin: 0;">
+                                    <div class="progress-bar-fill" style="width: {{ row.strength }}%; background-color: {% if row.strength >= 70 %}var(--color-high){% elif row.strength >= 40 %}var(--color-medium){% else %}var(--color-low){% endif %};"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div style="margin-bottom: 8px;">
+                                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Correlation Analysis:</span>
+                                <ul style="margin: 4px 0 0 0; padding-left: 15px; font-size: 13px; color: #fff;">
+                                    {% for reason in row.explanation %}
+                                    <li>{{ reason }}</li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                            
+                            {% if row.indicators %}
+                            <div>
+                                <span style="font-size: 11px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.03em;">Shared Indicators ({{ row.shared_count }}):</span>
+                                <div class="chip-container" style="margin-top: 4px;">
+                                    {% for indicator in row.indicators %}
+                                    <span class="chip active">
+                                        <i class="fa-solid {% if indicator.type == 'Phone' %}fa-mobile-screen-button{% elif indicator.type == 'UPI' %}fa-credit-card{% elif indicator.type == 'IP' %}fa-network-wired{% else %}fa-hashtag{% endif %}" style="margin-right: 4px;"></i>
+                                        {{ indicator.type }}: {{ indicator.value }}
+                                    </span>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-arrows-spin"></i>
+            <p>No overlaps detected between active cases.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

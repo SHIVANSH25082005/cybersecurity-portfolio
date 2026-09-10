@@ -1,0 +1,448 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set report = workspace.report %}
+{% set case = report.case %}
+
+<div class="workspace-header">
+    <div>
+        <h1>{{ case[1] }} - {{ case[2] }}</h1>
+        <p class="subtitle">Legal notices and official correspondence records.</p>
+    </div>
+
+    <div class="workspace-actions">
+        <a class="btn btn-outline" href="/cases"><i class="fa-solid fa-briefcase"></i> All Cases</a>
+        <a class="btn btn-secondary" href="/assessment/{{ case[1] }}"><i class="fa-solid fa-file-shield"></i> Assessment</a>
+        <a class="btn btn-secondary" href="/timeline_reconstruction?case_id={{ case[1] }}"><i class="fa-solid fa-clock"></i> Timeline</a>
+        <a class="btn btn-secondary" href="/link_analysis"><i class="fa-solid fa-circle-nodes"></i> Graph</a>
+        <a class="btn btn-secondary" href="/case_similarity?case_id={{ case[1] }}"><i class="fa-solid fa-clone"></i> Similarity</a>
+        <a class="btn btn-primary" href="/download_report/{{ case[1] }}"><i class="fa-solid fa-download"></i> PDF Report</a>
+    </div>
+</div>
+
+<!-- Navigation tabs -->
+<div class="workspace-nav" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 20px;">
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}">Overview</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#evidence-section">Evidence</a>
+    <a class="ws-nav-link" href="/timeline_reconstruction?case_id={{ case[1] }}">Timeline</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#tasks-section">Tasks</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#notes-section">Notes</a>
+    <a class="ws-nav-link active" href="/workspace/{{ case[1] }}/legal">Legal Correspondence</a>
+    <a class="ws-nav-link" href="/download_report/{{ case[1] }}">Reports</a>
+</div>
+
+<div class="card">
+    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; padding: 12px 20px;">
+        <h3>Legal Correspondence &amp; Section Notices</h3>
+        <button type="button" id="toggle-view-btn" onclick="toggleView()" class="btn btn-sm btn-primary"><i class="fa-solid fa-plus"></i> Generate New Notice</button>
+    </div>
+    
+    <div class="card-body">
+        <!-- SECTION 1: NOTICE HISTORY -->
+        <div id="notice-history-section">
+            <!-- FILTER BAR -->
+            <div style="background-color: rgba(0, 0, 0, 0.15); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 15px; margin-bottom: 20px; display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px;">
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px;">Notice Number</label>
+                    <input type="text" id="search-number" oninput="applyFilters()" placeholder="Search Number..." style="padding: 6px 10px; font-size: 12px; height: 32px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px;">Entity Value</label>
+                    <input type="text" id="search-entity" oninput="applyFilters()" placeholder="Search Entity..." style="padding: 6px 10px; font-size: 12px; height: 32px;">
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px;">Status</label>
+                    <select id="filter-status" onchange="applyFilters()" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                        <option value="">All Statuses</option>
+                        <option value="Draft">Draft</option>
+                        <option value="Sent">Sent</option>
+                        <option value="Response Received">Response Received</option>
+                        <option value="Closed">Closed</option>
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px;">Organization</label>
+                    <select id="filter-org" onchange="applyFilters()" class="select-enterprise" style="padding: 6px 8px; font-size: 12px; height: 32px;">
+                        <option value="">All Organizations</option>
+                        {% for org in orgs %}
+                        <option value="{{ org }}">{{ org }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="form-group" style="margin-bottom: 0;">
+                    <label style="font-size: 11px;">Notice Type</label>
+                    <input type="text" id="search-type" oninput="applyFilters()" placeholder="Notice Type..." style="padding: 6px 10px; font-size: 12px; height: 32px;">
+                </div>
+            </div>
+
+            <!-- HISTORY TABLE -->
+            {% if notices %}
+            <div class="table-container" style="border: none; margin: 0;">
+                <table id="notices-table">
+                    <thead>
+                        <tr>
+                            <th>Notice ID</th>
+                            <th>Generated Date</th>
+                            <th>Target Organization</th>
+                            <th>Notice Type</th>
+                            <th>Related Coordinate Entity</th>
+                            <th>Dispatch Status</th>
+                            <th style="text-align: center;">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for n in notices %}
+                        <tr class="notice-row" data-id="{{ n.notice_id }}" data-org="{{ n.organization }}" data-type="{{ n.notice_type }}" data-entity="{{ n.related_entity_value }}" data-status="{{ n.status }}">
+                            <td><strong style="color: #fff; font-family: var(--font-mono);">{{ n.notice_id }}</strong></td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ n.generated_date }}</td>
+                            <td><strong style="color: #fff;">{{ n.organization }}</strong></td>
+                            <td>{{ n.notice_type }}</td>
+                            <td>
+                                <span style="font-size: 11px; color: var(--text-muted);">{{ n.related_entity_type }}:</span><br>
+                                <strong style="font-family: var(--font-mono); color: #fff;">{{ n.related_entity_value }}</strong>
+                            </td>
+                            <td>
+                                {% set status_lower = n.status|lower %}
+                                {% if "draft" in status_lower %}
+                                <span class="badge badge-muted">{{ n.status }}</span>
+                                {% elif "sent" in status_lower %}
+                                <span class="badge badge-info">{{ n.status }}</span>
+                                {% elif "response" in status_lower %}
+                                <span class="badge badge-low">{{ n.status }}</span>
+                                {% else %}
+                                <span class="badge badge-medium">{{ n.status }}</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div style="display: flex; gap: 6px; justify-content: center;">
+                                    <a class="btn btn-sm btn-primary" href="/workspace/{{ case[1] }}/notice/{{ n.notice_id }}">View</a>
+                                    <a class="btn btn-sm btn-outline" href="/workspace/{{ case[1] }}/notice/{{ n.notice_id }}#edit">Edit</a>
+                                    <a class="btn btn-sm btn-outline" style="border-color: var(--color-low); color: var(--color-low) !important;" href="/workspace/{{ case[1] }}/notice/{{ n.notice_id }}/download"><i class="fa-solid fa-file-pdf"></i> PDF</a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p id="no-results-msg" style="display:none; text-align:center; color: var(--text-muted); margin-top:20px; font-weight: 600;">No notices match the filtered parameters.</p>
+            {% else %}
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fa-solid fa-scale-balanced" style="font-size: 2rem;"></i>
+                <p style="margin: 0; margin-top: 10px;">No legal Section notices have been generated for this case file.</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- SECTION 2: NOTICE GENERATION FORM -->
+        <div id="notice-form-section" style="display: none;">
+            <form action="/workspace/{{ case[1] }}/notice/generate" method="POST" id="generate-notice-form">
+                <div style="display: grid; grid-template-columns: 1fr 1.25fr; gap: 20px; align-items: start;">
+                    <!-- Form Inputs -->
+                    <div style="background-color: rgba(0,0,0,0.15); padding: 20px; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+                        <h3 style="margin-top: 0; border-bottom: 1px solid var(--border-subtle); padding-bottom: 10px; color: var(--primary); font-size: 15px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-gavel"></i> Dispatch Parameters</h3>
+                        
+                        <!-- Organization Selection -->
+                        <div class="form-group">
+                            <label>Target Nodal Organization</label>
+                            <select name="organization" id="select-org" onchange="onOrgChange()" required class="select-enterprise">
+                                <option value="">-- Choose Target Organization --</option>
+                                {% for org in orgs %}
+                                <option value="{{ org }}">{{ org }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+
+                        <!-- Notice Type Selection -->
+                        <div class="form-group">
+                            <label>Legal Action / Notice Type</label>
+                            <select name="notice_type" id="select-type" onchange="filterEntitiesByNoticeType()" required disabled class="select-enterprise">
+                                <option value="">-- Select Notice Type --</option>
+                            </select>
+                        </div>
+
+                        <!-- Related Entity Selection -->
+                        <div class="form-group">
+                            <label>Related Case Coordinate Entity</label>
+                            <select name="related_entity" id="select-entity" onchange="fetchTemplate()" required class="select-enterprise">
+                                <option value="">-- Select Related Entity --</option>
+                                {% for entity in workspace.entity_profiles %}
+                                <option value="{{ entity[0] }}|{{ entity[1] }}">{{ entity[0] }}: {{ entity[1] }}</option>
+                                {% endfor %}
+                            </select>
+                            <small style="display: block; margin-top: 5px; color: var(--text-muted);">Only target nodes associated with this case workspace can be selected.</small>
+                        </div>
+
+                        <input type="hidden" name="status" value="Draft">
+                    </div>
+
+                    <!-- Form Live Preview -->
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <h3 style="margin: 0; color: #fff; font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-eye"></i> Notice Document Live Preview</h3>
+                            <button type="button" id="edit-preview-btn" onclick="toggleEditPreview()" class="btn btn-sm btn-outline" style="display: none;"><i class="fa-solid fa-edit"></i> Edit Notice Text</button>
+                        </div>
+                        
+                        <!-- Formatted Preview Page (Paper-like style) -->
+                        <div id="notice-paper-preview" style="background: white; color: black; padding: 25px; border-radius: var(--radius-sm); min-height: 380px; max-height: 420px; overflow-y: auto; font-family: 'Courier New', Courier, monospace; white-space: pre-wrap; font-size: 13px; border: 1px solid #cbd5e1; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.5);">Select an Organization, Notice Type, and Related Entity to preview the document template...</div>
+                        
+                        <!-- Raw Edit Textarea -->
+                        <textarea name="content" id="notice-edit-textarea" style="display: none; width: 100%; height: 380px; box-sizing: border-box; padding: 15px; font-family: var(--font-mono); font-size: 13px; background: #0b0f19; color: #fff; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm); resize: vertical;"></textarea>
+                        
+                        <!-- Submit -->
+                        <div style="text-align: right; margin-top: 5px;">
+                            <button type="submit" id="generate-pdf-btn" disabled class="btn btn-primary" style="padding: 10px 20px;"><i class="fa-solid fa-file-pdf"></i> Generate &amp; Save PDF Notice</button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Toggle View between History and Builder Form
+    function toggleView() {
+        var historySec = document.getElementById("notice-history-section");
+        var formSec = document.getElementById("notice-form-section");
+        var btn = document.getElementById("toggle-view-btn");
+        
+        if (formSec.style.display === "none") {
+            formSec.style.display = "block";
+            historySec.style.display = "none";
+            btn.innerHTML = '<i class="fa-solid fa-list"></i> View Notice History';
+            btn.classList.replace("btn-primary", "btn-outline");
+        } else {
+            formSec.style.display = "none";
+            historySec.style.display = "block";
+            btn.innerHTML = '<i class="fa-solid fa-plus"></i> Generate New Notice';
+            btn.classList.replace("btn-outline", "btn-primary");
+        }
+    }
+
+    // Dynamic Notice Types Map
+    const noticeTypesMap = {{ notice_types_json | safe }};
+
+    // Store original entities on load for filtering
+    let originalEntities = [];
+    window.addEventListener('DOMContentLoaded', () => {
+        const entitySelect = document.getElementById("select-entity");
+        for (let i = 0; i < entitySelect.options.length; i++) {
+            const opt = entitySelect.options[i];
+            if (opt.value) {
+                const parts = opt.value.split("|");
+                originalEntities.push({
+                    value: opt.value,
+                    text: opt.textContent,
+                    type: parts[0]
+                });
+            }
+        }
+    });
+
+    function onOrgChange() {
+        var orgSelect = document.getElementById("select-org");
+        var typeSelect = document.getElementById("select-type");
+        var selectedOrg = orgSelect.value;
+        
+        typeSelect.innerHTML = '<option value="">-- Select Notice Type --</option>';
+        
+        if (selectedOrg && noticeTypesMap[selectedOrg]) {
+            noticeTypesMap[selectedOrg].forEach(function(type) {
+                var opt = document.createElement("option");
+                opt.value = type;
+                opt.textContent = type;
+                typeSelect.appendChild(opt);
+            });
+            typeSelect.disabled = false;
+        } else {
+            typeSelect.disabled = true;
+        }
+        
+        filterEntitiesByNoticeType();
+    }
+
+    function filterEntitiesByNoticeType() {
+        const typeSelect = document.getElementById("select-type");
+        const entitySelect = document.getElementById("select-entity");
+        const selectedType = typeSelect.value.toLowerCase();
+        
+        // Save current selection value
+        const previousSelection = entitySelect.value;
+        
+        // Clear select
+        entitySelect.innerHTML = '<option value="">-- Select Related Entity --</option>';
+        
+        let allowedEntityTypes = null;
+        
+        // Dynamic filters based on selected Notice Type (Instruction 6)
+        if (['subscriber details', 'caf', 'cdr', 'ipdr', 'imei history'].includes(selectedType)) {
+            allowedEntityTypes = ['phone'];
+        } else if (['freeze account', 'freeze request', 'transaction history'].includes(selectedType)) {
+            allowedEntityTypes = ['bank account', 'upi'];
+        } else if (['registrant details', 'domain information'].includes(selectedType)) {
+            allowedEntityTypes = ['domain'];
+        } else if (['account information'].includes(selectedType)) {
+            allowedEntityTypes = ['email'];
+        } else if (['hosting details'].includes(selectedType)) {
+            allowedEntityTypes = ['website', 'domain'];
+        }
+        
+        // Repopulate select with matching items
+        let stillValid = false;
+        originalEntities.forEach(item => {
+            const itemType = item.type.toLowerCase();
+            const isAllowed = !allowedEntityTypes || allowedEntityTypes.includes(itemType);
+            
+            if (isAllowed) {
+                const opt = document.createElement("option");
+                opt.value = item.value;
+                opt.textContent = item.text;
+                entitySelect.appendChild(opt);
+                
+                if (item.value === previousSelection) {
+                    stillValid = true;
+                }
+            }
+        });
+        
+        if (stillValid) {
+            entitySelect.value = previousSelection;
+        } else {
+            entitySelect.value = "";
+        }
+        
+        fetchTemplate();
+    }
+
+    // Edit Preview mode toggler
+    var isEditingPreview = false;
+    
+    function toggleEditPreview() {
+        var previewDiv = document.getElementById("notice-paper-preview");
+        var textarea = document.getElementById("notice-edit-textarea");
+        var btn = document.getElementById("edit-preview-btn");
+        
+        if (!isEditingPreview) {
+            textarea.value = previewDiv.textContent;
+            previewDiv.style.display = "none";
+            textarea.style.display = "block";
+            btn.innerHTML = '<i class="fa-solid fa-eye"></i> Preview Document';
+            btn.style.borderColor = "var(--color-low)";
+            btn.style.color = "var(--color-low)";
+            isEditingPreview = true;
+        } else {
+            previewDiv.textContent = textarea.value;
+            textarea.style.display = "none";
+            previewDiv.style.display = "block";
+            btn.innerHTML = '<i class="fa-solid fa-edit"></i> Edit Notice Text';
+            btn.style.borderColor = "rgba(255,255,255,0.25)";
+            btn.style.color = "var(--text-secondary)";
+            isEditingPreview = false;
+        }
+    }
+
+    // Fetch template from DB dynamically when selections change
+    function fetchTemplate() {
+        var org = document.getElementById("select-org").value;
+        var type = document.getElementById("select-type").value;
+        var entitySelect = document.getElementById("select-entity");
+        var entityVal = entitySelect.value;
+        
+        var previewDiv = document.getElementById("notice-paper-preview");
+        var textarea = document.getElementById("notice-edit-textarea");
+        var editBtn = document.getElementById("edit-preview-btn");
+        var submitBtn = document.getElementById("generate-pdf-btn");
+        
+        if (!org || !type || !entityVal) {
+            previewDiv.textContent = "Select an Organization, Notice Type, and Related Entity to preview the document template...";
+            textarea.value = "";
+            editBtn.style.display = "none";
+            submitBtn.disabled = true;
+            return;
+        }
+        
+        var entityParts = entityVal.split("|");
+        var entityType = entityParts[0];
+        var entityValue = entityParts[1];
+        
+        previewDiv.textContent = "Loading template from database...";
+        
+        var url = "/workspace/{{ case[1] }}/api/notice_template?org=" + encodeURIComponent(org) + 
+                  "&type=" + encodeURIComponent(type) + 
+                  "&entity_type=" + encodeURIComponent(entityType) + 
+                  "&entity_value=" + encodeURIComponent(entityValue);
+                  
+        fetch(url)
+            .then(response => response.json())
+            .then(data => {
+                if (data.template) {
+                    if (isEditingPreview) {
+                        textarea.value = data.template;
+                    } else {
+                        previewDiv.textContent = data.template;
+                        textarea.value = data.template;
+                    }
+                    editBtn.style.display = "inline-block";
+                    submitBtn.disabled = false;
+                } else {
+                    previewDiv.textContent = "Error loading template.";
+                    submitBtn.disabled = true;
+                }
+            })
+            .catch(err => {
+                previewDiv.textContent = "Failed to fetch template.";
+                submitBtn.disabled = true;
+            });
+    }
+
+    document.getElementById("generate-notice-form").addEventListener("submit", function(e) {
+        var previewDiv = document.getElementById("notice-paper-preview");
+        var textarea = document.getElementById("notice-edit-textarea");
+        
+        if (!isEditingPreview) {
+            textarea.value = previewDiv.textContent;
+        }
+    });
+
+    // Client-side Notice History Filter
+    function applyFilters() {
+        var searchNum = document.getElementById("search-number").value.toLowerCase();
+        var searchEnt = document.getElementById("search-entity").value.toLowerCase();
+        var filterStatus = document.getElementById("filter-status").value;
+        var filterOrg = document.getElementById("filter-org").value;
+        var searchType = document.getElementById("search-type").value.toLowerCase();
+        
+        var rows = document.querySelectorAll(".notice-row");
+        var matchedCount = 0;
+        
+        rows.forEach(function(row) {
+            var id = row.getAttribute("data-id").toLowerCase();
+            var org = row.getAttribute("data-org");
+            var type = row.getAttribute("data-type").toLowerCase();
+            var entity = row.getAttribute("data-entity").toLowerCase();
+            var status = row.getAttribute("data-status");
+            
+            var matchNum = !searchNum || id.includes(searchNum);
+            var matchEnt = !searchEnt || entity.includes(searchEnt);
+            var matchStatus = !filterStatus || status === filterStatus;
+            var matchOrg = !filterOrg || org === filterOrg;
+            var matchType = !searchType || type.includes(searchType);
+            
+            if (matchNum && matchEnt && matchStatus && matchOrg && matchType) {
+                row.style.display = "";
+                matchedCount++;
+            } else {
+                row.style.display = "none";
+            }
+        });
+        
+        var noResults = document.getElementById("no-results-msg");
+        if (noResults) {
+            noResults.style.display = (matchedCount === 0 && rows.length > 0) ? "block" : "none";
+        }
+    }
+</script>
+
+{% endblock %}

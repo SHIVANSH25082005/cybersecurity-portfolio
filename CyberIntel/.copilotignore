@@ -1,0 +1,13 @@
+venv/**
+__pycache__/**
+uploads/**
+*.xlsx
+*.png
+*.jpg
+*.jpeg
+*.pdf
+*.zip
+
+.git
+
+node_modules/**

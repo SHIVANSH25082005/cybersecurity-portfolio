@@ -1,0 +1,3 @@
+--- Mock Evidence File Content ---
+Name: case_evidence.txt
+Description: Raw forensic captures for SIM Swap Case

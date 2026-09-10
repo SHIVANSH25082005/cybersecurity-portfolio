@@ -1,0 +1,4 @@
+Victim received call from +91-9876543210 impersonating SBI customer care.
+Call duration: 14 min 32 sec. Timestamp: 2026-07-01 08:00:00 IST.
+Transfer made: ₹2,45,000 via UPI bankhelp@okaxis
+IFSC: SBIN0012345 | Account: 98765432101

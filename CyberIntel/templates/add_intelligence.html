@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Add Intelligence</h1>
+    </div>
+</div>
+
+<div style="max-width: 800px; margin: 0 auto;">
+    <!-- Intake Form Panel -->
+    <div class="dashboard-panel" id="add-intel-form" style="margin-bottom: 2rem;">
+        <h2>Intelligence Profile Ingest</h2>
+
+        <form action="/add_profile" method="POST">
+            <div class="form-group">
+                <label>Case File ID Binding</label>
+                <input type="text" name="case_id" placeholder="Case ID (e.g. CASE001)" required>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Suspect Phone Number</label>
+                    <input type="text" name="phone" placeholder="Phone Number (e.g. 9876543210)">
+                </div>
+
+                <div class="form-group">
+                    <label>Suspect UPI ID</label>
+                    <input type="text" name="upi" placeholder="UPI ID Address (e.g. suspect@upi)">
+                </div>
+
+                <div class="form-group">
+                    <label>Suspect Email Address</label>
+                    <input type="text" name="email" placeholder="Email Address">
+                </div>
+
+                <div class="form-group">
+                    <label>Suspect Telegram Handle</label>
+                    <input type="text" name="telegram" placeholder="Telegram Username (e.g. @suspect)">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Suspect Website Domain</label>
+                <input type="text" name="website" placeholder="Website URL (e.g. suspect-domain.com)">
+            </div>
+
+            <hr style="margin: 15px 0; border-color: var(--border-subtle);">
+            
+            <!-- Location Intel -->
+            <h3>Location Intelligence Geocoder</h3>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Country</label>
+                    <input type="text" id="intel_country" name="country" placeholder="Country">
+                </div>
+                <div class="form-group">
+                    <label>State</label>
+                    <input type="text" id="intel_state" name="state" placeholder="State">
+                </div>
+                <div class="form-group">
+                    <label>District</label>
+                    <input type="text" id="intel_district" name="district" placeholder="District">
+                </div>
+                <div class="form-group">
+                    <label>City</label>
+                    <input type="text" id="intel_city" name="city" placeholder="City">
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1.5fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Locality</label>
+                    <input type="text" id="intel_locality" name="locality" placeholder="Locality">
+                </div>
+                <div class="form-group">
+                    <label>Address details</label>
+                    <input type="text" id="intel_address" name="address" placeholder="Warrant address details">
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 15px; align-items: flex-end;">
+                <div class="form-group" style="flex: 1;">
+                    <label>Latitude Coordinates</label>
+                    <input type="number" id="intel_lat" name="latitude" step="any" placeholder="Latitude">
+                </div>
+                <div class="form-group" style="flex: 1;">
+                    <label>Longitude Coordinates</label>
+                    <input type="number" id="intel_lng" name="longitude" step="any" placeholder="Longitude">
+                </div>
+                <button type="button" id="btn-intel-coords" class="btn btn-outline" style="padding: 10px 15px;"><i class="fa-solid fa-earth-americas"></i> Query Lat/Lng</button>
+            </div>
+            <span id="intel-geocode-status" style="font-size: 11px; font-weight: 600; display: block; margin-top: 5px;"></span>
+
+            <hr style="margin: 15px 0; border-color: var(--border-subtle);">
+
+            <button type="submit" class="btn btn-primary" style="width: 100%;"><i class="fa-solid fa-floppy-disk"></i> Register Intelligence Profile</button>
+        </form>
+    </div>
+</div>
+
+<!-- Geocoding JS Script (Preserved exactly) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var btn = document.getElementById("btn-intel-coords");
+    var statusSpan = document.getElementById("intel-geocode-status");
+
+    btn.addEventListener("click", function() {
+        var country = document.getElementById("intel_country").value.trim();
+        var state = document.getElementById("intel_state").value.trim();
+        var district = document.getElementById("intel_district").value.trim();
+        var city = document.getElementById("intel_city").value.trim();
+        var locality = document.getElementById("intel_locality").value.trim();
+        var address = document.getElementById("intel_address").value.trim();
+
+        var queryParts = [address, locality, city, district, state, country].filter(function(p) { return p !== ""; });
+        if (queryParts.length === 0) {
+            statusSpan.textContent = "Please fill in at least one location field first.";
+            statusSpan.style.color = "var(--color-critical)";
+            return;
+        }
+
+        statusSpan.textContent = "Querying OpenStreetMap nominatim geocoder...";
+        statusSpan.style.color = "var(--text-secondary)";
+
+        var query = queryParts.join(", ");
+        var url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(query) + "&format=json&limit=1";
+
+        fetch(url, {
+            headers: {
+                "User-Agent": "AntigravityGeoIP/1.0"
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data && data.length > 0) {
+                document.getElementById("intel_lat").value = parseFloat(data[0].lat);
+                document.getElementById("intel_lng").value = parseFloat(data[0].lon);
+                statusSpan.textContent = "Coordinates geocoded successfully!";
+                statusSpan.style.color = "var(--color-low)";
+            } else {
+                statusSpan.textContent = "No coordinates found for the entered location.";
+                statusSpan.style.color = "var(--color-medium)";
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            statusSpan.textContent = "Geocoding API service limit or error.";
+            statusSpan.style.color = "var(--color-critical)";
+        });
+    });
+});
+</script>
+
+{% endblock %}

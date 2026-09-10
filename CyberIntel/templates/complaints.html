@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Register Citizen Complaint</h1>
+    </div>
+    <div class="workspace-actions">
+        <a href="/cases" class="btn btn-outline"><i class="fa-solid fa-briefcase"></i> View All Cases</a>
+    </div>
+</div>
+
+<div style="max-width: 900px; margin: 0 auto;">
+    <form method="POST">
+        <!-- Case Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Case File Association</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="case_id">Case ID Binding</label>
+                        <input type="text" id="case_id" name="case_id" placeholder="Enter Case ID (e.g. CASE001)" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="complainant_name">Citizen Complainant Name</label>
+                        <input type="text" id="complainant_name" name="complainant_name" placeholder="Complainant Name">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Suspect Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Suspect Indicators</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="phone_number">Suspect Phone Number</label>
+                        <input type="text" id="phone_number" name="phone_number" placeholder="Phone Number (e.g. 9876543210)">
+                    </div>
+                    <div class="form-group">
+                        <label for="upi_id">Suspect UPI ID</label>
+                        <input type="text" id="upi_id" name="upi_id" placeholder="UPI Account ID (e.g. account@upi)">
+                    </div>
+                    <div class="form-group">
+                        <label for="email">Suspect Email Address</label>
+                        <input type="text" id="email" name="email" placeholder="Email Address">
+                    </div>
+                    <div class="form-group">
+                        <label for="telegram">Suspect Telegram Username</label>
+                        <input type="text" id="telegram" name="telegram" placeholder="Telegram username (e.g. @suspect)">
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label for="website">Suspect Website Domain</label>
+                        <input type="text" id="website" name="website" placeholder="Website URL (e.g. suspect-phishing.com)">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Complaint Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Complaint Narrative Details</h3>
+            </div>
+            <div class="card-body">
+                <div class="form-group">
+                    <label for="complaint_details">Reported Details / Incident Log</label>
+                    <textarea id="complaint_details" name="complaint_details" placeholder="Describe the transaction flows, phishing URLs, or blackmail logs..." rows="5"></textarea>
+                </div>
+            </div>
+        </div>
+
+        <!-- Location Information -->
+        <div class="card">
+            <div class="card-header">
+                <h3>Geographic Location Intelligence</h3>
+            </div>
+            <div class="card-body">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div class="form-group">
+                        <label for="loc_country">Country</label>
+                        <input type="text" id="loc_country" name="country" placeholder="Country">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_state">State</label>
+                        <input type="text" id="loc_state" name="state" placeholder="State">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_district">District</label>
+                        <input type="text" id="loc_district" name="district" placeholder="District">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_city">City</label>
+                        <input type="text" id="loc_city" name="city" placeholder="City">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_locality">Locality</label>
+                        <input type="text" id="loc_locality" name="locality" placeholder="Locality">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_address">Address Detail</label>
+                        <input type="text" id="loc_address" name="address" placeholder="Warrant/Incident address">
+                    </div>
+                </div>
+                
+                <hr style="margin: 15px 0; border-color: var(--border-subtle);">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr auto; gap: 15px; align-items: flex-end;">
+                    <div class="form-group">
+                        <label for="loc_lat">Latitude Coordinates</label>
+                        <input type="number" id="loc_lat" name="latitude" step="any" placeholder="Latitude">
+                    </div>
+                    <div class="form-group">
+                        <label for="loc_lng">Longitude Coordinates</label>
+                        <input type="number" id="loc_lng" name="longitude" step="any" placeholder="Longitude">
+                    </div>
+                    <button type="button" id="btn-get-coords" class="btn btn-outline" style="padding: 10px 15px;"><i class="fa-solid fa-earth-americas"></i> Query Lat/Lng</button>
+                </div>
+                <span id="geocode-status" style="font-size: 11px; font-weight: 600; display: block; margin-top: 5px;"></span>
+            </div>
+        </div>
+
+        <div style="display: flex; justify-content: center; margin-top: 20px; margin-bottom: 40px;">
+            <button type="submit" class="btn btn-primary" style="padding: 12px 32px; font-size: 1rem; min-width: 250px;">
+                <i class="fa-solid fa-floppy-disk"></i> Save &amp; Correlate Complaint
+            </button>
+        </div>
+    </form>
+</div>
+
+<!-- Geocoding script (preserved) -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var btn = document.getElementById("btn-get-coords");
+    var statusSpan = document.getElementById("geocode-status");
+
+    btn.addEventListener("click", function() {
+        var country = document.getElementById("loc_country").value.trim();
+        var state = document.getElementById("loc_state").value.trim();
+        var district = document.getElementById("loc_district").value.trim();
+        var city = document.getElementById("loc_city").value.trim();
+        var locality = document.getElementById("loc_locality").value.trim();
+        var address = document.getElementById("loc_address").value.trim();
+
+        var queryParts = [address, locality, city, district, state, country].filter(function(p) { return p !== ""; });
+        if (queryParts.length === 0) {
+            statusSpan.textContent = "Please fill in at least one location field first.";
+            statusSpan.style.color = "var(--color-critical)";
+            return;
+        }
+
+        statusSpan.textContent = "Querying OpenStreetMap nominatim geocoder...";
+        statusSpan.style.color = "var(--text-secondary)";
+
+        var query = queryParts.join(", ");
+        var url = "https://nominatim.openstreetmap.org/search?q=" + encodeURIComponent(query) + "&format=json&limit=1";
+
+        fetch(url, {
+            headers: {
+                "User-Agent": "AntigravityGeoIP/1.0"
+            }
+        })
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (data && data.length > 0) {
+                document.getElementById("loc_lat").value = parseFloat(data[0].lat);
+                document.getElementById("loc_lng").value = parseFloat(data[0].lon);
+                statusSpan.textContent = "Coordinates geocoded successfully!";
+                statusSpan.style.color = "var(--color-low)";
+            } else {
+                statusSpan.textContent = "No coordinates found for the entered location.";
+                statusSpan.style.color = "var(--color-medium)";
+            }
+        })
+        .catch(function(err) {
+            console.error(err);
+            statusSpan.textContent = "Geocoding API service limit or error.";
+            statusSpan.style.color = "var(--color-critical)";
+        });
+    });
+});
+</script>
+
+{% endblock %}

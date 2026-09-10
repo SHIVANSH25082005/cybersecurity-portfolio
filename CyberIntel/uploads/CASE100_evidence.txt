@@ -1,0 +1,1 @@
+CASE100 Digital Logs trace: victim clicked phishing link from IP 49.37.120.10.

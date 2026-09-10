@@ -1,0 +1,4 @@
+IP 49.37.120.10: Shared across CASE001, CASE002, CASE999. High-risk node.
+IP 103.88.44.20: Shared across CASE001, CASE999. VPN exit node suspected.
+IP 185.220.101.45: Tor exit node. New in CASE999.
+IP 91.108.4.200: Telegram server range. Infrastructure overlap confirmed.

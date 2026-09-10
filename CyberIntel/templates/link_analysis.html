@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<h1>Advanced Link Analysis</h1>
+
+<form action="/link_analysis_result" method="POST">
+
+    <input
+        type="text"
+        name="search_value"
+        placeholder="Phone / UPI / Email / Telegram">
+
+    <button type="submit">
+        Analyze
+    </button>
+
+</form>
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Stored Intelligence Records</h1>
+    </div>
+</div>
+
+<!-- Search Panel -->
+<div class="card" style="margin-bottom: 10px;">
+    <div class="card-body" style="padding: 15px;">
+        <form method="GET" action="/records" style="display: flex; gap: 12px; align-items: center; margin: 0;">
+            <div style="flex-grow: 1; position: relative;">
+                <input type="text" name="q" placeholder="Search coordinates, names, emails, values or Case IDs..." value="{{ search_query or '' }}" style="width: 100%; height: 46px; padding: 10px 16px; font-size: 15px; background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-subtle); color: white; border-radius: var(--radius-md); outline: none; box-sizing: border-box;">
+            </div>
+            <button type="submit" class="btn btn-primary" style="height: 46px; display: flex; align-items: center; gap: 8px; padding: 0 40px; font-size: 15px;"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+            {% if search_query %}
+            <a href="/records" class="btn btn-outline" style="height: 46px; display: flex; align-items: center; gap: 6px; padding: 0 25px; text-decoration: none; box-sizing: border-box; font-size: 15px;"><i class="fa-solid fa-circle-xmark"></i> Clear</a>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Stored Intelligence Records -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Registered Suspect Coordinates</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if records %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Record ID</th>
+                            <th>Coordinate Type</th>
+                            <th>Suspect Coordinate Value</th>
+                            <th>Case ID</th>
+                            <th>Registration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for record in records %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ record[0] }}</td>
+                            <td><span class="badge badge-muted">{{ record[1] }}</span></td>
+                            <td>
+                                <a class="ws-link" style="font-family: var(--font-mono); font-weight: bold;" href="/entity?type={{ record[1]|urlencode }}&value={{ record[2]|urlencode }}">
+                                    {{ record[2] }}
+                                </a>
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if record[4] %}
+                                <a class="ws-link" href="/workspace/{{ record[4]|urlencode }}" style="font-weight: bold; color: var(--primary);">{{ record[4] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">{{ record[3] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fa-solid fa-database"></i>
+                <p>No suspect coordinates stored.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Stored Complaint Records -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Registered Citizen Complaints</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if complaints %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Complainant Name</th>
+                            <th>Suspect Phone</th>
+                            <th>Suspect UPI</th>
+                            <th>Suspect Email</th>
+                            <th>Suspect Telegram</th>
+                            <th>Suspect Website</th>
+                            <th>Case ID</th>
+                            <th>Logged Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for complaint in complaints %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ complaint[0] }}</td>
+                            <td><strong style="color: #fff;">{{ complaint[1] }}</strong></td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[2] %}
+                                <a class="ws-link" href="/entity?type=Phone&value={{ complaint[2]|urlencode }}">{{ complaint[2] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[3] %}
+                                <a class="ws-link" href="/entity?type=UPI&value={{ complaint[3]|urlencode }}">{{ complaint[3] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[4] %}
+                                <a class="ws-link" href="/entity?type=Email&value={{ complaint[4]|urlencode }}">{{ complaint[4] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[5] %}
+                                <a class="ws-link" href="/entity?type=Telegram&value={{ complaint[5]|urlencode }}">{{ complaint[5] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[6] %}
+                                <a class="ws-link" href="/entity?type=Website&value={{ complaint[6]|urlencode }}">{{ complaint[6] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if complaint[9] %}
+                                <a class="ws-link" href="/workspace/{{ complaint[9]|urlencode }}" style="font-weight: bold; color: var(--primary);">{{ complaint[9] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted); font-size: 12px;">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ complaint[8] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state">
+                <i class="fa-solid fa-file-invoice"></i>
+                <p>No citizen complaints registered.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% endblock %}

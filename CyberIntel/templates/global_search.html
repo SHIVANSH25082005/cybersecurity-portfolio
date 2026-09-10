@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Global Intelligence Search</h1>
+    </div>
+</div>
+
+<div class="card" style="max-width: 600px; margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Search Query</h3>
+    </div>
+    <div class="card-body">
+        <form method="GET" action="/search" style="flex-direction: row; gap: 10px; align-items: center; margin-bottom: 0;">
+            <input
+                type="text"
+                name="q"
+                value="{{ query or '' }}"
+                placeholder="Search Phone, UPI, Email, IP, Case ID, SHA256..."
+                style="flex: 1;"
+                required
+            >
+            <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search</button>
+        </form>
+    </div>
+</div>
+
+{% if query %}
+<div class="card">
+    <div class="card-header">
+        <h3>Search Results for "{{ query }}"</h3>
+    </div>
+    <div class="card-body">
+        <!-- Cases List -->
+        <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-briefcase"></i> Matching Cases ({{ results["cases"]|length }})</h4>
+        {% if results["cases"] %}
+        <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Case ID</th>
+                        <th>Case Name</th>
+                        <th>Classification Type</th>
+                        <th>Investigator</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results["cases"] %}
+                    <tr>
+                        <td>
+                            <a class="ws-link" style="font-family: var(--font-mono); font-weight: bold;" href="/workspace/{{ row['case_id'] }}">
+                                <i class="fa-solid fa-folder-open"></i> {{ row["case_id"] }}
+                            </a>
+                        </td>
+                        <td><strong style="color: #fff;">{{ row["case_name"] }}</strong></td>
+                        <td>{{ row["case_type"] }}</td>
+                        <td>{{ row["investigator"] }}</td>
+                        <td><span class="badge badge-info">{{ row["status"] }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p style="color: var(--text-muted); font-size: 13px; margin-bottom: 25px;">No matching case records found.</p>
+        {% endif %}
+
+        <!-- Other Categories Summaries -->
+        <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-chart-simple"></i> Other Database Overlaps</h4>
+        <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 15px;">
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["complaints"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Complaints</span>
+            </div>
+            
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["entities"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Extracted Entities</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["ipdr"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">IPDR Records</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["evidence"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Evidence Files</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["notes"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Investigator Notes</span>
+            </div>
+
+            <div style="background: rgba(0,0,0,0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle); text-align: center;">
+                <span style="font-size: 20px; font-weight: 800; color: #fff; display: block;">{{ results["tasks"]|length }}</span>
+                <span style="font-size: 11px; color: var(--text-muted); text-transform: uppercase; font-weight: 600;">Pending Tasks</span>
+            </div>
+        </div>
+
+        <!-- Detailed Overlaps Breakdowns -->
+        <div style="margin-top: 35px; border-top: 1px solid var(--border-subtle); padding-top: 25px;">
+            
+            <!-- Complaints -->
+            {% if results["complaints"] %}
+            <h4 style="margin-top: 0; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-file-invoice"></i> Matching Citizen Complaints ({{ results["complaints"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Complainant</th>
+                            <th>Phone</th>
+                            <th>UPI</th>
+                            <th>Email</th>
+                            <th>Case ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["complaints"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ row["id"] }}</td>
+                            <td><strong style="color: #fff;">{{ row["complainant_name"] }}</strong></td>
+                            <td style="font-family: var(--font-mono);">{{ row["phone_number"] or "—" }}</td>
+                            <td style="font-family: var(--font-mono);">{{ row["upi_id"] or "—" }}</td>
+                            <td style="font-family: var(--font-mono);">{{ row["email"] or "—" }}</td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if row["case_id"] %}
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Extracted Entities -->
+            {% if results["entities"] %}
+            <h4 style="margin-top: 25px; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-list-check"></i> Matching Suspect Coordinates ({{ results["entities"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Record ID</th>
+                            <th>Coordinate Type</th>
+                            <th>Suspect Coordinate Value</th>
+                            <th>Associated Case ID</th>
+                            <th>Registration Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["entities"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ row["id"] }}</td>
+                            <td><span class="badge badge-muted">{{ row["entity_type"] }}</span></td>
+                            <td>
+                                <a class="ws-link" style="font-family: var(--font-mono); font-weight: bold;" href="/entity?type={{ row['entity_type']|urlencode }}&value={{ row['entity_value']|urlencode }}">
+                                    {{ row["entity_value"] }}
+                                </a>
+                            </td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if row["case_id"] %}
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ row["date_added"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- IPDR Records -->
+            {% if results["ipdr"] %}
+            <h4 style="margin-top: 25px; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-rectangle-list"></i> Matching IPDR Logs ({{ results["ipdr"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Log ID</th>
+                            <th>Phone Number</th>
+                            <th>IP Address</th>
+                            <th>Location</th>
+                            <th>Case ID</th>
+                            <th>Timestamp</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["ipdr"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ row["id"] }}</td>
+                            <td style="font-family: var(--font-mono);">{{ row["phone_number"] }}</td>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ row["ip_address"] }}</td>
+                            <td>{{ row["location"] }}</td>
+                            <td style="font-family: var(--font-mono);">
+                                {% if row["case_id"] %}
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                                {% else %}
+                                <span style="color: var(--text-muted);">—</span>
+                                {% endif %}
+                            </td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ row["timestamp"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Evidence Files -->
+            {% if results["evidence"] %}
+            <h4 style="margin-top: 25px; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-file-shield"></i> Matching Evidence Files ({{ results["evidence"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Evidence ID</th>
+                            <th>File Name</th>
+                            <th>Description</th>
+                            <th>Case ID</th>
+                            <th>Hash (SHA256)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["evidence"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ row["evidence_id"] }}</td>
+                            <td>{{ row["file_name"] }}</td>
+                            <td>{{ row["description"] or "—" }}</td>
+                            <td style="font-family: var(--font-mono);">
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                            </td>
+                            <td style="font-family: var(--font-mono); font-size: 11px; max-width: 150px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row["sha256_hash"] or "—" }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Investigator Notes -->
+            {% if results["notes"] %}
+            <h4 style="margin-top: 25px; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-note-sticky"></i> Matching Investigator Notes ({{ results["notes"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Note ID</th>
+                            <th>Investigator</th>
+                            <th>Content Preview</th>
+                            <th>Case ID</th>
+                            <th>Date Logged</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["notes"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ row["id"] }}</td>
+                            <td><strong>{{ row["officer"] }}</strong></td>
+                            <td style="max-width: 300px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;">{{ row["note"] }}</td>
+                            <td style="font-family: var(--font-mono);">
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                            </td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ row["created_at"] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+            <!-- Pending Tasks -->
+            {% if results["tasks"] %}
+            <h4 style="margin-top: 25px; margin-bottom: 12px; color: var(--primary); font-size: 14px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-list-check"></i> Matching Tasks ({{ results["tasks"]|length }})</h4>
+            <div class="table-container" style="border: none; margin: 0 0 25px 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Task ID</th>
+                            <th>Task Description</th>
+                            <th>Owner</th>
+                            <th>Case ID</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in results["tasks"] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ row["id"] }}</td>
+                            <td>{{ row["task"] }}</td>
+                            <td>{{ row["owner"] or "—" }}</td>
+                            <td style="font-family: var(--font-mono);">
+                                <a class="ws-link" href="/workspace/{{ row['case_id'] }}" style="font-weight: bold;">{{ row["case_id"] }}</a>
+                            </td>
+                            <td>
+                                <span class="badge {% if row['status'] == 'completed' %}badge-success{% else %}badge-muted{% endif %}">
+                                    {{ row["status"] }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% endif %}
+
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

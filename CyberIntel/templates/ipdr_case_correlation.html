@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>IPDR Case Correlation</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Overlapping IP Infrastructure</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if results %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Suspect IP Address</th>
+                        <th>Correlated Case IDs</th>
+                        <th>Cross-Case Overlap Count</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td><strong style="font-family: var(--font-mono); color: #fff;">{{ row[0] }}</strong></td>
+                        <td>
+                            <div style="display: flex; gap: 6px; flex-wrap: wrap;">
+                                {% for case in row[1].split(',') %}
+                                <a href="/workspace/{{ case|trim }}" class="btn btn-sm btn-outline">{{ case|trim }}</a>
+                                {% endfor %}
+                            </div>
+                        </td>
+                        <td><strong style="font-size: 1.1rem; color: #fff;">{{ row[2] }}</strong> case(s)</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-diagram-project"></i>
+            <p>No overlapping IP address nodes found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

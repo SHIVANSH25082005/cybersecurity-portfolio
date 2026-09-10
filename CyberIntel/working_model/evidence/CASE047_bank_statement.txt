@@ -1,0 +1,4 @@
+Account: XXXX-XXXX-2101 | IFSC: SBIN0012345
+2026-07-01 08:34:22 — UPI OUT — ₹2,45,000 — bankhelp@okaxis — REF#INB20260701001
+2026-07-01 09:12:10 — UPI OUT — ₹1,00,000 — mule999@paytm   — REF#INB20260701002
+Balance after fraud: ₹1,234.00

@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+    <h1>Investigator Search Portal</h1>
+
+    <form method="POST">
+
+        <input
+            type="text"
+            name="search_value"
+            placeholder="Enter Phone, UPI, Email, Telegram or Website"
+            required
+        >
+
+        <button type="submit">
+            Search
+        </button>
+
+    </form>
+
+</body>
+</html>
+
+{% endblock %}

@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <p class="eyebrow"><i class="fa-solid fa-briefcase"></i> Case Profile Summary</p>
+        <h1>{{ case[2] }}</h1>
+        <p class="subtitle">Case ID: {{ case[1] }}</p>
+    </div>
+    <div class="workspace-actions">
+        <a class="btn btn-outline" href="/cases"><i class="fa-solid fa-arrow-left"></i> All Cases</a>
+        <a class="btn btn-primary" href="/workspace/{{ case[1] }}"><i class="fa-solid fa-folder-open"></i> Go to Workspace</a>
+        <a class="btn btn-secondary" href="/generate_report/{{ case[1] }}"><i class="fa-solid fa-download"></i> Generate Investigation Report</a>
+    </div>
+</div>
+
+<div class="dashboard-row" style="margin-top: 0; margin-bottom: 20px;">
+    <!-- Profile Card -->
+    <div class="dashboard-panel">
+        <h2>Case File Details</h2>
+        <dl class="ws-kv">
+            <dt>Case ID</dt><dd style="font-family: var(--font-mono); font-weight: bold;">{{ case[1] }}</dd>
+            <dt>Case Name</dt><dd style="font-weight: 600;">{{ case[2] }}</dd>
+            <dt>Classification Type</dt><dd>{{ case[3] }}</dd>
+            <dt>Investigating Officer</dt><dd>{{ case[4] }}</dd>
+            <dt>Current Status</dt><dd><span class="badge badge-info">{{ case[5] }}</span></dd>
+            <dt>Date Registered</dt><dd style="font-family: var(--font-mono);">{{ case[6] }}</dd>
+        </dl>
+    </div>
+
+    <!-- Complaints Overlap -->
+    <div class="dashboard-panel">
+        <h2>Linked Citizen Complaints</h2>
+        {% if complaints %}
+        <div class="table-container" style="border: none; margin: 0;">
+            <table>
+                <thead>
+                    <tr><th>Complainant Name</th><th>Phone Number</th></tr>
+                </thead>
+                <tbody>
+                    {% for complaint in complaints %}
+                    <tr>
+                        <td><strong>{{ complaint[1] }}</strong></td>
+                        <td style="font-family: var(--font-mono);">{{ complaint[2] }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding: 1.5rem; border: none; background: transparent;">
+            <i class="fa-solid fa-file-invoice" style="font-size: 2rem;"></i>
+            <p style="margin-bottom: 0; margin-top: 10px;">No citizen complaints linked to this case file.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Common IP Address Analysis</h1>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Shared Suspect IP Access Points</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if results %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Suspect IP Address</th>
+                        <th>Suspect Phone Numbers</th>
+                        <th>Fan-Out Score</th>
+                        <th>Coordinated Risk Confidence</th>
+                        <th style="text-align: right;">Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">
+                            {{ row[0] }}
+                        </td>
+                        <td style="font-family: var(--font-mono); color: var(--text-secondary); max-width: 350px; word-break: break-all;">
+                            {{ row[1] }}
+                        </td>
+                        <td>
+                            <strong style="color: #fff;">{{ row[2] }}</strong> phone(s)
+                        </td>
+                        <td>
+                            {% if row[2] <= 2 %}
+                                <span class="badge badge-low"><i class="fa-solid fa-shield"></i> Strong Correlation</span>
+                            {% elif row[2] <= 5 %}
+                                <span class="badge badge-medium"><i class="fa-solid fa-circle-exclamation"></i> Moderate Correlation</span>
+                            {% else %}
+                                <span class="badge badge-high"><i class="fa-solid fa-triangle-exclamation"></i> Weak Correlation</span>
+                            {% endif %}
+                        </td>
+                        <td style="text-align: right;">
+                            <button class="btn btn-sm btn-outline" onclick="navigator.clipboard.writeText('{{ row[0] }}'); var b=this; b.innerHTML='<i class=\"fa-solid fa-check\"></i> Copied'; setTimeout(function(){ b.innerHTML='<i class=\"fa-solid fa-copy\"></i> Copy'; }, 2000);"><i class="fa-solid fa-copy"></i> Copy</button>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-circle-nodes"></i>
+            <p>No overlapping IP address accesses found.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}

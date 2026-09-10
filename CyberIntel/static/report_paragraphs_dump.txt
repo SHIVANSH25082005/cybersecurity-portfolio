@@ -1,0 +1,171 @@
+0 [Normal]: Integrated Cybercrime Intelligence & Investigation Platform
+1 [Normal]: Gurugram Police Cyber Security Summer Internship (GPCSSI)
+2 [Normal]: Submitted By: Shivansh
+GPCSSI ID: 26CW494
+Internship Mentor: Dr. Rakshit Tandon
+Internship Duration: 2 June 2026 – 27 June 2026
+3 [Normal]: 
+4 [Normal]: 1. Introduction
+5 [Normal]: Cybercrime investigations often involve large volumes of fragmented information including complaints, phone numbers, UPI IDs, email addresses, websites, IP addresses, and other digital indicators. Investigators must manually analyze these datasets to identify hidden relationships, shared infrastructure, and links between seemingly unrelated cases.
+6 [Normal]: The Integrated Cybercrime Intelligence & Investigation Platform was developed as an investigation-support system to centralize cybercrime intelligence, manage case information, analyze IPDR records, discover hidden relationships, and correlate investigations through shared indicators. The platform combines intelligence management, analytical tools, relationship discovery, and graph-based visualization within a unified environment, enabling investigators to transform isolated records into actionable intelligence.
+7 [Normal]: Objectives
+8 [Normal]: Centralize cybercrime intelligence records and investigation data.
+9 [Normal]: Support structured case-based investigation workflows.
+10 [Normal]: Discover relationships through shared indicators and infrastructure.
+11 [Normal]: Correlate investigations using common entities and IP addresses.
+12 [Normal]: Visualize investigative networks through graph analysis.
+13 [Normal (Web)]: Reduce false-positive correlations through confidence-based IP relationship analysis.
+14 [Normal (Web)]: Explain investigative relationships through evidence-based correlation reasoning.
+15 [Normal]: 
+16 [Normal]: 
+17 [Normal]: 
+18 [Normal]: 
+19 [Normal]: Figure 1: Platform Dashboard
+20 [Normal]: 
+21 [Normal]: 2. Investigation Workflow
+22 [Normal (Web)]: Complaint Registration
+↓
+Intelligence Entry
+↓
+Case Assignment
+↓
+IPDR Upload
+↓
+Common IP Analysis
+↓
+Confidence Analysis
+↓
+IP-Based Relationship Discovery
+↓
+Case-to-Case Correlation
+↓
+Timeline Reconstruction
+↓
+Relationship Strength Ranking
+↓
+Case Correlation Graph
+↓
+Intelligence Assessment Engine
+↓
+Investigator Intelligence Generation
+23 [Normal (Web)]: Investigators begin by registering complaints and collecting intelligence indicators associated with a case. IPDR records are then uploaded and analyzed to identify shared infrastructure and linked entities. Correlation and relationship discovery modules uncover hidden connections between complaints, intelligence records, infrastructure, and cases. Graph visualization modules provide a visual representation of discovered relationships.
+24 [Normal (Web)]: The Intelligence Assessment Engine serves as the final analytical layer by automatically generating executive summaries, analytical findings, risk classifications, cross-case correlation findings, and dynamic investigative recommendations.
+25 [Normal (Web)]: The platform not only identifies relationships between entities and cases, but also interprets investigative findings and generates dynamic investigative recommendations based on available evidence.
+26 [Normal]: 
+27 [Normal]: 3. Correlation, Intelligence Assessment &
+28 [Normal]: Investigative Recommendations
+29 [Normal]: The Correlation Engine serves as a core analytical component of the platform. It compares information across complaints, intelligence records, IPDR datasets, and cases to identify common indicators and hidden relationships.
+30 [Normal]: Relationship Explanation Engine
+31 [Normal]: To improve investigative transparency, the platform includes a Relationship Explanation Engine that automatically explains why two cases are correlated. For each discovered relationship, investigators are investigators are provided with the underlying evidence including shared indicators such as phone numbers, UPI IDs, email addresses, websites, shared IP infrastructure, fan-out analysis results, time proximity findings, and confidence assessments. Rather than presenting correlations as simple links, the platform provides investigative reasoning and supporting evidence for every identified relationship. This enables investigators to understand not only that a relationship exists, but also the reasoning behind it..
+32 [Normal]: IP-Based Relationship Discovery
+33 [Normal]: The platform identifies phone numbers and cases associated with common IP addresses, enabling investigators to uncover shared infrastructure and detect relationships between seemingly unrelated investigations.
+34 [Normal]: 
+35 [Normal]: 
+36 [Normal]: Figure 2: IP-Based Relationship Discovery
+37 [Normal]: 
+38 [Normal]: Case-to-Case Correlation
+39 [Normal (Web)]: The Case Correlation Engine identifies relationships between investigations using shared indicators, infrastructure evidence, and temporal activity patterns. Correlated cases are automatically ranked according to relationship strength, enabling investigators to prioritize significant investigative leads.
+40 [Normal (Web)]: Correlation Factors
+41 [Normal (Web)]: Shared IP Addresses 
+42 [Normal (Web)]: Shared Phone Numbers 
+43 [Normal (Web)]: Shared UPI IDs 
+44 [Normal (Web)]: Shared Email Addresses 
+45 [Normal (Web)]: Shared Websites 
+46 [Normal (Web)]: Time Proximity Analysis 
+47 [Normal (Web)]: Confidence Analysis 
+48 [Normal (Web)]: Correlation Output
+49 [Normal (Web)]: Relationship Strength Score 
+50 [Normal (Web)]: Shared Indicator Summary 
+51 [Normal (Web)]: Evidence-Based Correlation Explanation 
+52 [Normal (Web)]: Correlated Case Ranking
+53 [Normal (Web)]: 
+54 [Normal (Web)]: Figure 3: Case-to-Case Correlation Results
+55 [Normal]:  
+56 [Normal]: 
+57 [Normal]: 
+58 [Normal]: Timeline Reconstruction
+59 [Normal]: The Timeline Reconstruction module automatically reconstructs the sequence of investigative events by combining complaint records, intelligence indicators, IPDR activity, discovered entities, and infrastructure transitions into a unified chronological timeline. The module enables investigators to track IP activity, identify location and infrastructure changes, monitor entity discovery, reconstruct activity sessions, and visualize the progression of a case through summary metrics such as total events, unique IPs, locations, transitions, and entities, providing a clearer understanding of case evolution and suspect behavior.
+60 [Normal]: 
+61 [Normal]: 
+62 [Normal]: 
+63 [Normal]: 
+64 [Normal]: 
+65 [Normal]: 
+66 [Normal]: Figure 4: Timeline Reconstruction Results
+67 [Normal]: 
+68 [Normal]: 
+69 [Normal]: Confidence Analysis
+70 [Normal]: 
+71 [Normal]: To improve correlation reliability, the platform performs confidence-based assessment of shared IP relationships. Confidence scores are derived using fan-out behavior, time proximity analysis, and shared infrastructure evidence. This analytical layer helps investigators distinguish meaningful relationships from coincidental network overlap and supports evidence-based prioritization of investigative leads.
+72 [Normal]: 
+73 [Normal]: Figure 4: Confidence Analysis Results
+74 [Normal]: 
+75 [Normal]: 
+76 [Normal]: 
+77 [Normal]: 
+78 [Normal]: Investigation Knowledge Base & SOPs
+79 [Normal]: To standardize digital forensics and response procedures, the platform features a categorized SOP Knowledge Base. This module enables investigators to access structured documentation, legal procedures, cybercrime investigation workflows, and case-handling guides within the interface. Investigators can search and filter SOPs by category.
+80 [Normal]: Furthermore, the module integrates directly with the Case Workspace, generating context-aware SOP recommendations automatically based on the case type or detected Modus Operandi. This ensures investigators immediately receive actionable protocols without manual search, boosting procedural compliance and speed.
+81 [Normal]: 
+82 [isselectedend]: Intelligence Assessment Engine & Dynamic Investigative Recommendations
+83 [isselectedend]: The Intelligence Assessment Engine converts investigative data into structured intelligence outputs. Using information collected throughout the investigation workflow, the system automatically generates:
+
+• Executive Summaries
+• Analytical Findings
+• Cross-Case Correlation Findings
+• Risk Classification
+• Rapid Infrastructure Switching Findings
+• Dynamic Investigative Recommendations
+• Investigator Assessment Reports
+84 [isselectedend]: 
+85 [isselectedend]: 
+86 [isselectedend]: 
+87 [isselectedend]: 
+88 [isselectedend]: 
+89 [isselectedend]: 
+90 [isselectedend]: 
+91 [isselectedend]: Figure 5: Intelligence Assessment Engine Results
+92 [isselectedend]: 
+93 [Normal]: 4. Graph Analysis & Visualization
+94 [Normal]: Graph-based visualization simplifies complex investigative relationships and enables investigators to understand large datasets more effectively.
+95 [Normal]: Interactive Visualization Enhancements
+96 [Normal]: All analytical visualization layers across the platform—including the Intelligence Fusion Graph, the Link Analysis Graph, and the Case Correlation Graph—have been modernized to support native interactivity. Investigators can zoom, pan, toggle fullscreen modes, drag nodes, and export graphs directly to PNG or SVG formats. To maintain absolute visual fidelity and pixel-perfect layouts matching NetworkX calculations, the system overlays high-performance interactive controls over static Matplotlib renders, incorporating click coordinate logging.
+97 [Normal]: 
+98 [Normal]: Link Analysis
+99 [Normal]: The Link Analysis module visualizes relationships between complaints, entities, indicators, and infrastructure. It also provides network assessment information, helping investigators identify significant entities and potential risk areas.
+100 [Normal]: The module also generates network summaries and risk assessments, helping investigators identify high-risk entities and prioritize investigative efforts.
+101 [Normal]: Figure 6: Link Analysis Visualization
+102 [Normal]: 
+103 [Normal]: 
+104 [Normal]: Case Correlation Graph
+105 [Normal]: The Case Correlation Graph provides a visual representation of relationships between investigations. Cases connected through shared indicators are displayed as linked nodes, allowing investigators to quickly understand how investigations may be related.
+106 [Normal]: Graph visualization transforms correlation results into an easily interpretable format and supports intelligence-driven decision-making.
+107 [Normal]: 
+108 [Normal]: 
+109 [Normal]: Figure 7: Case Correlation Graph
+110 [Normal]: 
+111 [Normal]: 
+112 [Normal (Web)]: 
+113 [Normal]: Geo-spatial Intelligence Mapping
+114 [Normal]: The Geo-spatial Intelligence module integrates interactive spatial telemetry mapping within the platform. Built using Leaflet.js and OpenStreetMap, it maps location telemetry from complaints, intelligence profiles, and cell tower telemetry logs. Locations are plotted dynamically on a dark-themed interactive map with support for marker clustering and heatmap layers to identify density hotspots.
+115 [Normal]: If coordinate fields are missing during record entry, the platform executes a single geocoding call via OpenStreetMap Nominatim on form submission and persists the coordinates. While rendering the map, it retrieves coordinates directly from the database without invoking external APIs, optimizing load performance. The page includes a statistics summary panel tracking total mapped and missing locations, country/state/city coverage, and multi-parameter filters.
+116 [Normal]: 
+117 [Normal (Web)]: IPDR Analysis
+118 [Normal (Web)]: Through Common IP Analysis, Fan-Out Analysis, Time Proximity Analysis, Confidence Analysis, IP-Based Relationship Discovery, Case Correlation, and the Intelligence Assessment Engine, investigators can identify shared infrastructure, assess relationship confidence, discover linked entities, strengthen correlation findings, and generate actionable intelligence. Confidence scores are derived using a combination of shared infrastructure analysis, fan-out behavior, and temporal proximity between connected entities.
+119 [Normal (Web)]: Rather than functioning as a standalone IPDR viewer, the platform utilizes IPDR information as supporting evidence for broader intelligence generation and investigative analysis.
+120 [Normal]: 5. Future Scope & Conclusion
+121 [Normal]: Future Scope
+122 [List Paragraph]: Integration with complaint registration portals for automated complaint ingestion, Golden Hour alerts, and bank freeze request generation.
+123 [List Paragraph]: Automated data extraction and ingestion from multiple sources.
+124 [List Paragraph]: Role-based access control and investigator-specific workspaces.
+125 [List Paragraph]: AI-based risk assessment, investigative recommendations, and correlation enhancement.
+126 [List Paragraph]: Digital evidence management and attachment features.
+127 [List Paragraph]: Support for additional indicators such as Aadhaar, PAN, Passport, Vehicle Registration, and Bank Account details
+128 [List Paragraph]: Interactive intelligence report export and sharing.
+129 [List Paragraph]: Advanced graph analytics and relationship exploration.
+130 [List Paragraph]: Multi-user collaborative investigation workflows.
+131 [Normal (Web)]: Conclusion
+132 [Normal (Web)]: The Integrated Cybercrime Intelligence & Investigation Platform demonstrates how intelligence management, relationship discovery, IPDR analysis, case correlation, graph visualization, and intelligence assessment can be integrated into a unified investigative environment.
+133 [Normal (Web)]: The platform enables investigators to centralize intelligence records, identify hidden relationships, discover shared infrastructure, correlate investigations, visualize complex networks, assess investigative risk, and generate evidence-based recommendations.
+134 [Normal (Web)]: By combining data management with analytical and intelligence-generation capabilities, the platform transforms fragmented cybercrime information into actionable investigative intelligence capable of supporting informed decision-making and investigative prioritization.
+135 [Normal]: 

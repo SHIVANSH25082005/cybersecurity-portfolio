@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Upload IPDR Data File</h1>
+    </div>
+</div>
+
+<div style="max-width: 650px; margin: 0 auto;">
+    <div class="card">
+        <div class="card-header">
+            <h3>IPDR Log Import Form</h3>
+        </div>
+        <div class="card-body">
+            <form method="POST" enctype="multipart/form-data">
+                <div class="form-group">
+                    <label>Target Case ID</label>
+                    <input
+                        type="text"
+                        name="case_id"
+                        placeholder="e.g. CASE001"
+                        required
+                    >
+                </div>
+
+                <div class="form-group" style="margin-top: 15px; margin-bottom: 20px;">
+                    <label>Select IPDR spreadsheet file (.xlsx, .xls, .csv)</label>
+                    <div style="border: 2px dashed var(--border-subtle); border-radius: var(--radius-md); padding: 30px; text-align: center; background: rgba(0,0,0,0.15); transition: border-color 0.2s; position: relative;">
+                        <i class="fa-solid fa-file-arrow-up" style="font-size: 2.25rem; color: var(--primary); margin-bottom: 10px; display: block;"></i>
+                        <input
+                            type="file"
+                            name="ipdr_file"
+                            accept=".xlsx, .xls, .csv"
+                            required
+                            style="opacity: 0; position: absolute; top: 0; left: 0; width: 100%; height: 100%; cursor: pointer;"
+                            onchange="document.getElementById('file-upload-name').textContent = this.files[0] ? this.files[0].name : 'No file selected';"
+                        >
+                        <span id="file-upload-name" style="font-size: 13px; font-weight: 600; color: var(--text-secondary);">Click here or drag file to select upload</span>
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%;">
+                    <i class="fa-solid fa-cloud-arrow-up"></i> Ingest IPDR Log Dataset
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,110 @@
+COMPREHENSIVE E2E VALIDATION REPORT (CASE201 - CASE218)
+Generated: 2026-07-15
+============================================================
+
+[PASS] Dashboard                                -- Loaded successfully (status 200)
+[PASS] Case Management                          -- Loaded successfully (status 200)
+[PASS] Complaint Registration Form              -- Loaded successfully (status 200)
+[PASS] Intelligence Records                     -- Loaded successfully (status 200)
+[PASS] IPDR Upload Form                         -- Loaded successfully (status 200)
+[PASS] IPDR Records List                        -- Loaded successfully (status 200)
+[PASS] Confidence Analysis Console              -- Loaded successfully (status 200)
+[PASS] Timeline Reconstruction Page             -- Loaded successfully (status 200)
+[PASS] Geospatial Map                           -- Loaded successfully (status 200)
+[PASS] Knowledge Base / SOPs                    -- Loaded successfully (status 200)
+[PASS] Workspace CASE201                        -- Loaded successfully
+[PASS] Workspace CASE202                        -- Loaded successfully
+[PASS] Workspace CASE203                        -- Loaded successfully
+[PASS] Workspace CASE204                        -- Loaded successfully
+[PASS] Workspace CASE205                        -- Loaded successfully
+[PASS] Workspace CASE206                        -- Loaded successfully
+[PASS] Workspace CASE207                        -- Loaded successfully
+[PASS] Workspace CASE208                        -- Loaded successfully
+[PASS] Workspace CASE209                        -- Loaded successfully
+[PASS] Workspace CASE210                        -- Loaded successfully
+[PASS] Workspace CASE211                        -- Loaded successfully
+[PASS] Workspace CASE212                        -- Loaded successfully
+[PASS] Workspace CASE213                        -- Loaded successfully
+[PASS] Workspace CASE214                        -- Loaded successfully
+[PASS] Workspace CASE215                        -- Loaded successfully
+[PASS] Workspace CASE216                        -- Loaded successfully
+[PASS] Workspace CASE217                        -- Loaded successfully
+[PASS] Workspace CASE218                        -- Loaded successfully
+[PASS] MO Detection CASE201                     -- Loaded successfully
+[PASS] MO Detection CASE202                     -- Loaded successfully
+[PASS] MO Detection CASE203                     -- Loaded successfully
+[PASS] MO Detection CASE204                     -- Loaded successfully
+[PASS] MO Detection CASE205                     -- Loaded successfully
+[PASS] MO Detection CASE206                     -- Loaded successfully
+[PASS] MO Detection CASE207                     -- Loaded successfully
+[PASS] MO Detection CASE208                     -- Loaded successfully
+[PASS] MO Detection CASE209                     -- Loaded successfully
+[PASS] MO Detection CASE210                     -- Loaded successfully
+[PASS] MO Detection CASE211                     -- Loaded successfully
+[PASS] MO Detection CASE212                     -- Loaded successfully
+[PASS] MO Detection CASE213                     -- Loaded successfully
+[PASS] MO Detection CASE214                     -- Loaded successfully
+[PASS] MO Detection CASE215                     -- Loaded successfully
+[PASS] MO Detection CASE216                     -- Loaded successfully
+[PASS] MO Detection CASE217                     -- Loaded successfully
+[PASS] MO Detection CASE218                     -- Loaded successfully
+[PASS] Correlation/Similarity CASE201           -- Loaded successfully
+[PASS] Correlation/Similarity CASE202           -- Loaded successfully
+[PASS] Correlation/Similarity CASE203           -- Loaded successfully
+[PASS] Correlation/Similarity CASE204           -- Loaded successfully
+[PASS] Correlation/Similarity CASE205           -- Loaded successfully
+[PASS] Correlation/Similarity CASE206           -- Loaded successfully
+[PASS] Correlation/Similarity CASE207           -- Loaded successfully
+[PASS] Correlation/Similarity CASE208           -- Loaded successfully
+[PASS] Correlation/Similarity CASE209           -- Loaded successfully
+[PASS] Correlation/Similarity CASE210           -- Loaded successfully
+[PASS] Correlation/Similarity CASE211           -- Loaded successfully
+[PASS] Correlation/Similarity CASE212           -- Loaded successfully
+[PASS] Correlation/Similarity CASE213           -- Loaded successfully
+[PASS] Correlation/Similarity CASE214           -- Loaded successfully
+[PASS] Correlation/Similarity CASE215           -- Loaded successfully
+[PASS] Correlation/Similarity CASE216           -- Loaded successfully
+[PASS] Correlation/Similarity CASE217           -- Loaded successfully
+[PASS] Correlation/Similarity CASE218           -- Loaded successfully
+[PASS] APIs CASE201                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 3
+[PASS] APIs CASE202                             -- Confidence overall: Insufficient Evidence, Timeline events: 3, Graph nodes: 3
+[PASS] APIs CASE203                             -- Confidence overall: Limited, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE204                             -- Confidence overall: Insufficient Evidence, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE205                             -- Confidence overall: Limited, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE206                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE207                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE208                             -- Confidence overall: Strong, Timeline events: 3, Graph nodes: 2
+[PASS] APIs CASE209                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE210                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE211                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE212                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE213                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE214                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 1
+[PASS] APIs CASE215                             -- Confidence overall: Moderate, Timeline events: 3, Graph nodes: 6
+[PASS] APIs CASE216                             -- Confidence overall: Insufficient Evidence, Timeline events: 3, Graph nodes: 7
+[PASS] APIs CASE217                             -- Confidence overall: Insufficient Evidence, Timeline events: 3, Graph nodes: 6
+[PASS] APIs CASE218                             -- Confidence overall: Insufficient Evidence, Timeline events: 3, Graph nodes: 7
+[PASS] PDF Report CASE201                       -- Generated report (54577 bytes)
+[PASS] PDF Report CASE202                       -- Generated report (297878 bytes)
+[PASS] PDF Report CASE203                       -- Generated report (129334 bytes)
+[PASS] PDF Report CASE204                       -- Generated report (49760 bytes)
+[PASS] PDF Report CASE205                       -- Generated report (56987 bytes)
+[PASS] PDF Report CASE206                       -- Generated report (59165 bytes)
+[PASS] PDF Report CASE207                       -- Generated report (50018 bytes)
+[PASS] PDF Report CASE208                       -- Generated report (50621 bytes)
+[PASS] PDF Report CASE209                       -- Generated report (49949 bytes)
+[PASS] PDF Report CASE210                       -- Generated report (48749 bytes)
+[PASS] PDF Report CASE211                       -- Generated report (47636 bytes)
+[PASS] PDF Report CASE212                       -- Generated report (47447 bytes)
+[PASS] PDF Report CASE213                       -- Generated report (56346 bytes)
+[PASS] PDF Report CASE214                       -- Generated report (54976 bytes)
+[PASS] PDF Report CASE215                       -- Generated report (56778 bytes)
+[PASS] PDF Report CASE216                       -- Generated report (75137 bytes)
+[PASS] PDF Report CASE217                       -- Generated report (74860 bytes)
+[PASS] PDF Report CASE218                       -- Generated report (75875 bytes)
+[PASS] Link Analysis Graph Generator            -- Generated successfully
+[PASS] Global Search Integration                -- All search terms returned correct results
+[PASS] DB Orphan Records Integrity Check        -- 0 orphan records found
+
+============================================================
+Total tests: 103 | Failures: 0

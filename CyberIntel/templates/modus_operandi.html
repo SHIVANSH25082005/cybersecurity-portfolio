@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Modus Operandi Detection Engine</h1>
+    </div>
+</div>
+
+<div class="ws-grid">
+    <!-- CASE SELECTION FORM -->
+    <details class="ws-card span-2" open>
+        <summary><span>Analyze Case Modus Operandi</span></summary>
+        <div class="ws-card-body">
+            <form method="POST" style="flex-direction: row; gap: 15px; align-items: flex-end; flex-wrap: wrap;">
+                <div class="form-group" style="flex: 1; min-width: 250px;">
+                    <label>Enter Case ID to analyze</label>
+                    <input type="text" name="case_id" value="{{ case_id }}" placeholder="e.g. CASE001" required>
+                </div>
+                <button type="submit" class="btn btn-primary" style="height: 40px;"><i class="fa-solid fa-arrows-spin"></i> Analyze M.O.</button>
+            </form>
+        </div>
+    </details>
+
+    {% if mo_data %}
+    <!-- DETECTED M.O. PROFILE -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>M.O. Analysis for {{ mo_data.case_id }}</span>
+            <span class="ws-hint">Detected: {{ mo_data.detected_mo }} ({{ mo_data.confidence }}% confidence)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 15px; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
+                <div>
+                    <h3 style="margin: 0; color: var(--primary);">{{ mo_data.detected_mo }}</h3>
+                    <p style="margin: 5px 0 0 0; color: var(--text-secondary); font-size: 13px;">Case Type: {{ mo_data.case_type or '—' }}</p>
+                </div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end;">
+                    <div style="font-size: 1.75rem; font-weight: 800; color: {% if mo_data.confidence >= 80 %}var(--color-low){% elif mo_data.confidence >= 60 %}var(--color-medium){% else %}var(--color-high){% endif %}; line-height: 1;">{{ mo_data.confidence }}%</div>
+                    <span style="font-size: 11px; color: var(--text-muted); font-weight: 600; text-transform: uppercase;">Confidence</span>
+                </div>
+            </div>
+
+            <!-- Description -->
+            <p style="font-size: 14px; line-height: 1.6; color: #fff; margin-bottom: 20px;">{{ mo_data.description }}</p>
+
+            <div class="ws-grid">
+                <!-- Signatures -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header">
+                        <h3>Triggered Signatures</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if mo_data.signatures %}
+                        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                            {% for sig in mo_data.signatures %}
+                            <li>{{ sig }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="ws-msg">No matching signatures detected.</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Recommendations -->
+                <div class="card" style="margin-bottom: 0;">
+                    <div class="card-header">
+                        <h3>Target Recommendations</h3>
+                    </div>
+                    <div class="card-body">
+                        {% if mo_data.recommendations %}
+                        <ul style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-secondary); line-height: 1.6;">
+                            {% for rec in mo_data.recommendations %}
+                            <li>{{ rec }}</li>
+                            {% endfor %}
+                        </ul>
+                        {% else %}
+                        <p class="ws-msg">No recommendations available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px; margin-bottom: 0;"><a class="ws-link" href="/workspace/{{ mo_data.case_id }}"><i class="fa-solid fa-arrow-right"></i> Go to Investigation Workspace</a></p>
+        </div>
+    </details>
+
+    <!-- RELATED CASES -->
+    <details class="ws-card span-2" open>
+        <summary><span>Related Cases Sharing Same M.O.</span></summary>
+        <div class="ws-card-body" style="padding: 0;">
+            {% if mo_data.related_cases %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Case ID</th>
+                            <th>Case Name</th>
+                            <th>Case Type</th>
+                            <th>Detected M.O.</th>
+                            <th>Investigator</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for rc in mo_data.related_cases %}
+                        <tr>
+                            <td><a class="ws-link" href="/workspace/{{ rc.case_id }}">{{ rc.case_id }}</a></td>
+                            <td style="color: #fff; font-weight: 600;">{{ rc.case_name }}</td>
+                            <td>{{ rc.case_type }}</td>
+                            <td><strong>{{ rc.detected_mo }}</strong></td>
+                            <td>{{ rc.investigator }}</td>
+                            <td>
+                                <span class="badge {% if rc.status == 'Open' %}badge-info{% else %}badge-low{% endif %}">{{ rc.status }}</span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <p class="ws-msg" style="padding: 20px;">No other cases found sharing this Modus Operandi.</p>
+            {% endif %}
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- GLOBAL M.O. STATISTICS -->
+    <details class="ws-card span-2" open>
+        <summary><span>Global Modus Operandi Statistics</span></summary>
+        <div class="ws-card-body" style="padding: 0;">
+            <div style="padding: 15px 20px; border-bottom: 1px solid var(--border-subtle);">
+                <p style="margin: 0; font-size: 13px; color: var(--text-secondary);">Total cases analyzed on the platform: <strong style="color: #fff;">{{ stats.total_cases }}</strong></p>
+            </div>
+            
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th style="width: 40%;">Modus Operandi Category</th>
+                            <th style="text-align: center; width: 20%;">Case Count</th>
+                            <th style="width: 40%;">Distribution Bar</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for dist in stats.distribution %}
+                        <tr>
+                            <td><strong style="color: #fff;">{{ dist.name }}</strong></td>
+                            <td style="text-align: center;">{{ dist.count }} case(s)</td>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div class="progress-bar-container" style="flex: 1; height: 8px; margin: 0;">
+                                        <div class="progress-bar-fill" style="width: {{ dist.percentage }}%;"></div>
+                                    </div>
+                                    <span style="font-size: 11px; font-family: var(--font-mono); font-weight: 600; color: #fff; width: 40px; text-align: right;">{{ dist.percentage }}%</span>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </details>
+</div>
+
+{% endblock %}

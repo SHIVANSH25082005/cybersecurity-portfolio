@@ -1,0 +1,182 @@
+[
+    {
+        "name": "Dashboard",
+        "path": "/",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 14633
+    },
+    {
+        "name": "View Cases List",
+        "path": "/cases",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 23540
+    },
+    {
+        "name": "Case Workspace CASE1000",
+        "path": "/workspace/CASE1000",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 140606
+    },
+    {
+        "name": "Add Note to Workspace",
+        "path": "/workspace/CASE1000/note",
+        "method": "POST",
+        "status_code": 302,
+        "success": true,
+        "sample": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/workspace/CASE1000\">/workspace/CASE1000</a>. If not, click the link.\n",
+        "length": 225
+    },
+    {
+        "name": "Add Task to Workspace",
+        "path": "/workspace/CASE1000/task",
+        "method": "POST",
+        "status_code": 302,
+        "success": true,
+        "sample": "<!doctype html>\n<html lang=en>\n<title>Redirecting...</title>\n<h1>Redirecting...</h1>\n<p>You should be redirected automatically to the target URL: <a href=\"/workspace/CASE1000\">/workspace/CASE1000</a>. If not, click the link.\n",
+        "length": 225
+    },
+    {
+        "name": "Link Analysis Search 8800001111",
+        "path": "/link_analysis_result",
+        "method": "POST",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 9686
+    },
+    {
+        "name": "Common IP Analysis",
+        "path": "/common_ip",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 18052
+    },
+    {
+        "name": "IPDR Case Correlation",
+        "path": "/ipdr_case_correlation",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 11010
+    },
+    {
+        "name": "Case Correlation List",
+        "path": "/case_correlation",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 141788
+    },
+    {
+        "name": "Case Correlation Graph Generation",
+        "path": "/case_correlation_graph",
+        "method": "POST",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 5981
+    },
+    {
+        "name": "Intelligence Assessment Report",
+        "path": "/assessment/CASE1000",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 41227
+    },
+    {
+        "name": "PDF Report Download",
+        "path": "/download_report/CASE1000",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "%PDF-1.4\n% ReportLab Generated PDF document (opensource)\n1 0 obj\n<<\n/F1 2 0 R /F2 3 0 R /F3 11 0 R\n>>\nendobj\n2 0 obj\n<<\n/BaseFont /Helvetica /Encoding /WinAnsiEncoding /Name /F1 /Subtype /Type1 /Type /Font\n>>\nendobj\n3 0 obj\n<<\n/BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding /Name /F2 /Subtype /Type1 /Type /Font\n>>\nendobj\n4 0 obj\n<<\n/Contents 20 0 R /MediaBox [ 0 0 595.2756 841.8898 ] /Parent ",
+        "length": 510979
+    },
+    {
+        "name": "Modus Operandi Detection",
+        "path": "/modus_operandi?case_id=CASE1000",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 17451
+    },
+    {
+        "name": "SOP Knowledge Base",
+        "path": "/sop",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 33096
+    },
+    {
+        "name": "Global Search CASE1000",
+        "path": "/search?q=CASE1000",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n    <meta charset=\"UTF-8\">\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n    <title>Cybercrime Intelligence & Investigation Platform</title>\n\n    <!-- Load Global Fonts & Icons -->\n    <link rel=\"stylesheet\" href=\"https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css\">\n    <link rel=\"stylesheet\" href=\"/static/",
+        "length": 9830
+    },
+    {
+        "name": "Timeline Preview JSON API",
+        "path": "/workspace/CASE1000/api/timeline_preview",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "{\"events\":[{\"details\":\"TOR Exit Node \\u2192 Google DNS\",\"event_type\":\"INFRASTRUCTURE_TRANSITION\",\"timestamp\":\"2026-06-07 14:36:00\",\"title\":\"Infrastructure Transition\"},{\"details\":\"Phone: 8800001111 | IP: 8.8.4.4 | Location: Google DNS\",\"event_type\":\"IPDR_ACTIVITY\",\"timestamp\":\"2026-06-07 14:36:00\",\"title\":\"IP Activity\"},{\"details\":\"VPN Node 2 \\u2192 TOR Exit Node\",\"event_type\":\"INFRASTRUCTURE_TRAN",
+        "length": 2442
+    },
+    {
+        "name": "Confidence JSON API",
+        "path": "/workspace/CASE1000/api/confidence",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "{\"assessed\":5,\"assessments\":[{\"confidence\":\"Strong\",\"contradictions\":[],\"dimensions\":{\"completeness\":{\"category\":\"Complete Log Fields\",\"explanation\":\"Full telecom data, cell towers, and geographic coordinates are populated.\",\"score\":1.0},\"corroboration\":{\"category\":\"Dual-Source Corroboration\",\"explanation\":\"IP address corroborated across 2 independent sources (e.g. IPDR + Entity Profile).\",\"score\"",
+        "length": 10148
+    },
+    {
+        "name": "Graph Preview JSON API",
+        "path": "/workspace/CASE1000/api/graph_preview",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "{\"edges\":[{\"source\":\"CASE1000\",\"target\":\"9876543210\"},{\"source\":\"CASE1000\",\"target\":\"9845123456\"},{\"source\":\"CASE1000\",\"target\":\"9900112233\"},{\"source\":\"CASE1000\",\"target\":\"9811223344\"},{\"source\":\"CASE1000\",\"target\":\"9922334455\"},{\"source\":\"CASE1000\",\"target\":\"8800001111\"},{\"source\":\"CASE1000\",\"target\":\"fraudster888@paytm\"},{\"source\":\"CASE1000\",\"target\":\"scammer999@gpay\"},{\"source\":\"CASE1000\",\"tar",
+        "length": 3159
+    },
+    {
+        "name": "Activity JSON API",
+        "path": "/workspace/CASE1000/api/activity",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "{\"activity\":[{\"actor\":\"Principal Systems Auditor\",\"kind\":\"Note\",\"label\":\"Auditor validation note - testing write functionality.\",\"time\":\"2026-07-10 02:52:21\"},{\"actor\":\"Auditor\",\"kind\":\"Task\",\"label\":\"Auditor verification of task engine\",\"time\":\"2026-07-10 02:52:21\"},{\"actor\":\"Principal Systems Auditor\",\"kind\":\"Note\",\"label\":\"Auditor validation note - testing write functionality.\",\"time\":\"2026-07-",
+        "length": 2565
+    },
+    {
+        "name": "Pipeline Status JSON API",
+        "path": "/workspace/CASE1000/api/pipeline",
+        "method": "GET",
+        "status_code": 200,
+        "success": true,
+        "sample": "{\"status\":\"not_run\"}\n",
+        "length": 21
+    }
+]

@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+{% set report = workspace.report %}
+{% set case = report.case %}
+
+<div class="workspace-header">
+    <div>
+        <h1>{{ case[1] }} - {{ case[2] }}</h1>
+        <p class="subtitle">Legal notices and official correspondence records.</p>
+    </div>
+
+    <div class="workspace-actions">
+        <a class="btn btn-outline" href="/cases"><i class="fa-solid fa-briefcase"></i> All Cases</a>
+        <a class="btn btn-secondary" href="/assessment/{{ case[1] }}"><i class="fa-solid fa-file-shield"></i> Assessment</a>
+        <a class="btn btn-secondary" href="/timeline_reconstruction?case_id={{ case[1] }}"><i class="fa-solid fa-clock"></i> Timeline</a>
+        <a class="btn btn-secondary" href="/link_analysis"><i class="fa-solid fa-circle-nodes"></i> Graph</a>
+        <a class="btn btn-secondary" href="/case_similarity?case_id={{ case[1] }}"><i class="fa-solid fa-clone"></i> Similarity</a>
+        <a class="btn btn-primary" href="/download_report/{{ case[1] }}"><i class="fa-solid fa-download"></i> PDF Report</a>
+    </div>
+</div>
+
+<!-- Navigation tabs -->
+<div class="workspace-nav" style="border-bottom: 1px solid var(--border-subtle); margin-bottom: 20px;">
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}">Overview</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#evidence-section">Evidence</a>
+    <a class="ws-nav-link" href="/timeline_reconstruction?case_id={{ case[1] }}">Timeline</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#tasks-section">Tasks</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}#notes-section">Notes</a>
+    <a class="ws-nav-link active" href="/workspace/{{ case[1] }}/legal">Legal Correspondence</a>
+    <a class="ws-nav-link" href="/download_report/{{ case[1] }}">Reports</a>
+</div>
+
+<div style="margin-bottom: 15px;">
+    <a href="/workspace/{{ case[1] }}/legal" class="ws-link" style="font-weight: bold; text-decoration: none;"><i class="fa-solid fa-arrow-left"></i> Back to Legal Correspondence</a>
+</div>
+
+<div class="ws-grid" style="display: grid; grid-template-columns: 1.2fr 1.8fr; gap: 20px; align-items: start;">
+    
+    <!-- LEFT COLUMN: NOTICE DETAILS & FORM -->
+    <div class="card" style="margin-bottom: 0;">
+        <div class="card-header">
+            <h3>Notice Metadata Profile</h3>
+        </div>
+        <div class="card-body">
+            <dl class="ws-kv" style="margin-bottom: 20px;">
+                <dt>Notice ID</dt>
+                <dd><strong style="font-family: var(--font-mono); color: #fff;">{{ notice.notice_id }}</strong></dd>
+                
+                <dt>Case Workspace ID</dt>
+                <dd><a class="ws-link" href="/workspace/{{ notice.case_id }}">{{ notice.case_id }}</a></dd>
+                
+                <dt>Generated Date</dt>
+                <dd style="font-family: var(--font-mono);">{{ notice.generated_date }}</dd>
+                
+                <dt>Nodal Organization</dt>
+                <dd><strong style="color: #fff;">{{ notice.organization }}</strong></dd>
+                
+                <dt>Notice Type</dt>
+                <dd>{{ notice.notice_type }}</dd>
+                
+                <dt>Related Coordinate</dt>
+                <dd><span style="font-size: 11px; color: var(--text-muted);">{{ notice.related_entity_type }}:</span> <strong style="font-family: var(--font-mono); color: #fff;">{{ notice.related_entity_value }}</strong></dd>
+                
+                <dt>Dispatch Status</dt>
+                <dd>
+                    {% set status_lower = notice.status|lower %}
+                    {% if "draft" in status_lower %}
+                    <span class="badge badge-muted">{{ notice.status }}</span>
+                    {% elif "sent" in status_lower %}
+                    <span class="badge badge-info">{{ notice.status }}</span>
+                    {% elif "response" in status_lower %}
+                    <span class="badge badge-low">{{ notice.status }}</span>
+                    {% else %}
+                    <span class="badge badge-medium">{{ notice.status }}</span>
+                    {% endif %}
+                </dd>
+            </dl>
+
+            <form action="/workspace/{{ notice.case_id }}/notice/{{ notice.notice_id }}/update" method="POST" style="margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 15px;">
+                <div class="form-group">
+                    <label>Update Dispatch Status</label>
+                    <select name="status" required class="select-enterprise">
+                        <option value="Draft" {% if notice.status == 'Draft' %}selected{% endif %}>Draft</option>
+                        <option value="Sent" {% if notice.status == 'Sent' %}selected{% endif %}>Sent</option>
+                        <option value="Response Received" {% if notice.status == 'Response Received' %}selected{% endif %}>Response Received</option>
+                        <option value="Closed" {% if notice.status == 'Closed' %}selected{% endif %}>Closed</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Notice Remarks &amp; Response Notes</label>
+                    <textarea name="notes" id="edit" placeholder="Enter investigation notes regarding this notice (e.g. response details, follow-ups)..." rows="4">{{ notice.notes or '' }}</textarea>
+                </div>
+
+                <div style="display: flex; gap: 8px; justify-content: flex-end; margin-top: 15px;">
+                    <a class="btn btn-outline" style="border-color: var(--color-low); color: var(--color-low) !important;" href="/workspace/{{ notice.case_id }}/notice/{{ notice.notice_id }}/download"><i class="fa-solid fa-file-pdf"></i> Download PDF</a>
+                    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Remarks</button>
+                </div>
+            </form>
+
+            <!-- ACTIVITY LOG -->
+            <div style="margin-top: 30px; border-top: 1px solid var(--border-subtle); padding-top: 20px;">
+                <h4 style="margin: 0 0 15px 0; color: var(--text-primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em;"><i class="fa-solid fa-list-check"></i> Notice Activity Log</h4>
+                {% if logs %}
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    {% for log in logs %}
+                    <div style="border-left: 2px solid var(--primary); padding-left: 12px;">
+                        <div style="font-weight: 600; font-size: 13px; color: #fff;">{{ log.action }}</div>
+                        <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px; font-family: var(--font-mono);">
+                            {{ log.timestamp }} &middot; Actor: {{ log.actor }}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p style="color: var(--text-muted); font-size: 13px; margin: 0;">No activity logged yet.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- RIGHT COLUMN: PDF EMBED PREVIEW -->
+    <div class="card" style="margin-bottom: 0; display: flex; flex-direction: column; height: 750px;">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-file-invoice"></i> Live Notice PDF Document Preview</h3>
+        </div>
+        <div class="card-body" style="flex-grow: 1; padding: 0; position: relative; overflow: hidden;">
+            <iframe src="/workspace/{{ notice.case_id }}/notice/{{ notice.notice_id }}/view" style="width: 100%; height: 100%; border: none;">
+                <p style="color: var(--text-muted); text-align: center; padding-top: 100px;">
+                    PDF preview not supported by your browser. 
+                    <a class="ws-link" href="/workspace/{{ notice.case_id }}/notice/{{ notice.notice_id }}/view" target="_blank">Click here to open PDF in a new tab</a>.
+                </p>
+            </iframe>
+        </div>
+    </div>
+
+</div>
+
+<script>
+    // Focus textarea if user navigated to #edit
+    window.addEventListener('DOMContentLoaded', () => {
+        if (window.location.hash === '#edit') {
+            const textarea = document.getElementById('edit');
+            if (textarea) {
+                textarea.focus();
+            }
+        }
+    });
+</script>
+
+{% endblock %}

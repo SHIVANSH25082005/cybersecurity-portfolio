@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <p class="eyebrow"><i class="fa-solid fa-microscope"></i> Investigation Results</p>
+        <h1>Intelligence Profile Discovery</h1>
+        <p class="subtitle">Query Search Parameter: <strong style="color: #fff; font-family: var(--font-mono);">{{ search_value }}</strong></p>
+    </div>
+</div>
+
+<div class="stats-container" style="margin-bottom: 25px;">
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Indicator Risk Score</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0; color: {% if risk_score >= 80 %}var(--color-high){% elif risk_score >= 40 %}var(--color-medium){% else %}var(--color-low){% endif %};">{{ risk_score }}/100</h2>
+    </div>
+    
+    <div class="stat-card" style="min-height: auto; padding: 15px;">
+        <span>Assigned Classification</span>
+        <h2 style="font-size: 1.75rem; margin: 5px 0 0 0;" class="level-{{ risk_level|lower }}">{{ risk_level }}</h2>
+    </div>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 25px;">
+    <!-- Matching Complaints -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-file-invoice"></i> Matching Citizen Complaints</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if complaint_results %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Complaint ID</th>
+                            <th>Complainant Name</th>
+                            <th>Associated Phone</th>
+                            <th>Associated UPI ID</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in complaint_results %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ row[0] }}</td>
+                            <td><strong style="color: #fff;">{{ row[1] }}</strong></td>
+                            <td style="font-family: var(--font-mono);">{{ row[2] or '—' }}</td>
+                            <td style="font-family: var(--font-mono);">{{ row[3] or '—' }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fa-solid fa-file-invoice-dollar" style="font-size: 1.75rem;"></i>
+                <p style="margin: 0; margin-top: 10px;">No matching citizen complaints registered for this parameter.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Matching Intelligence Records -->
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-database"></i> Matching Intelligence Profile Records</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            {% if intelligence_results %}
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Record ID</th>
+                            <th>Coordinate Node Type</th>
+                            <th>Coordinate Node Value</th>
+                            <th>Source Provenance</th>
+                            <th>Date Ingested</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for row in intelligence_results %}
+                        <tr>
+                            <td style="font-family: var(--font-mono);">{{ row[0] }}</td>
+                            <td><span class="badge badge-muted">{{ row[1] }}</span></td>
+                            <td><strong style="font-family: var(--font-mono); color: #fff;">{{ row[2] }}</strong></td>
+                            <td>{{ row[3] }}</td>
+                            <td style="font-family: var(--font-mono); font-size: 12px;">{{ row[4] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="empty-state" style="padding: 20px;">
+                <i class="fa-solid fa-database" style="font-size: 1.75rem;"></i>
+                <p style="margin: 0; margin-top: 10px;">No direct intelligence records found.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- OSINT Intelligence -->
+    {% if osint_result %}
+    <div class="card">
+        <div class="card-header">
+            <h3><i class="fa-solid fa-earth-americas"></i> OSINT Intelligence Assessment</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+                <dl class="ws-kv" style="margin: 0;">
+                    <dt>Indicator Coordinate</dt>
+                    <dd style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ osint_result[1] }}</dd>
+                    
+                    <dt>Indicator Type</dt>
+                    <dd>{{ osint_result[2] }}</dd>
+                    
+                    <dt>Host Country</dt>
+                    <dd>{{ osint_result[3] or '—' }}</dd>
+                    
+                    <dt>Provider Service</dt>
+                    <dd>{{ osint_result[4] or '—' }}</dd>
+                </dl>
+                
+                <dl class="ws-kv" style="margin: 0;">
+                    <dt>OSINT Risk Classification</dt>
+                    <dd><span class="badge {% if osint_result[5]|lower == 'high' %}badge-high{% elif osint_result[5]|lower == 'medium' %}badge-medium{% else %}badge-low{% endif %}">{{ osint_result[5] }}</span></dd>
+                    
+                    <dt>Scam Category Label</dt>
+                    <dd><strong style="color: #fff;">{{ osint_result[6] or 'Unclassified' }}</strong></dd>
+                    
+                    <dt>First Logged Date</dt>
+                    <dd style="font-family: var(--font-mono);">{{ osint_result[7] or '—' }}</dd>
+                    
+                    <dt>Last Observed Date</dt>
+                    <dd style="font-family: var(--font-mono);">{{ osint_result[8] or '—' }}</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Relationship Graph -->
+    <div class="visualization-panel">
+        <div class="visualization-header">
+            <div class="visualization-title">
+                <h3><i class="fa-solid fa-circle-nodes"></i> Local Neighbor Relationship Graph</h3>
+                <p>Interactive single-level neighbor nodes graph diagram</p>
+            </div>
+            <div class="visualization-controls">
+                <a href="{{ url_for('static', filename='graph.png') }}" download="relationship_graph.png" class="btn btn-sm btn-success"><i class="fa-solid fa-download"></i> Download PNG</a>
+            </div>
+        </div>
+        <div style="background-color: #0b0f19; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); padding: 20px; text-align: center;">
+            <img src="{{ url_for('static', filename='graph.png') }}" alt="Relationship Graph Visualization" style="max-width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-md);">
+        </div>
+    </div>
+</div>
+
+{% endblock %}

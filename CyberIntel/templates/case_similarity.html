@@ -1,0 +1,136 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Case Similarity Engine</h1>
+    </div>
+</div>
+
+<div class="card" style="max-width: 700px; margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Analyze Overlaps</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>Target Case ID</label>
+                    <input type="text" name="case_id" value="{{ case_id }}" placeholder="e.g. CASE001" required>
+                </div>
+                <div class="form-group">
+                    <label>Compare With Case ID (Optional)</label>
+                    <input type="text" name="other_case" value="{{ other_case }}" placeholder="e.g. CASE002">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;"><i class="fa-solid fa-arrows-spin"></i> Analyze Similarity</button>
+        </form>
+    </div>
+</div>
+
+{% if similarity %}
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Similarity Summary</h3>
+    </div>
+    <div class="card-body">
+        <p style="margin: 0; font-size: 1.05rem; font-weight: 500; color: #fff;">{{ similarity.summary }}</p>
+    </div>
+</div>
+
+<div class="card" style="margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Matching Investigations List</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if similarity.results %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 20%;">Similar Case</th>
+                        <th style="width: 25%;">Similarity Score</th>
+                        <th style="width: 25%;">Shared Indicators</th>
+                        <th style="width: 30%;">Correlation Explanation</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for match in similarity.results %}
+                    <tr>
+                        <td>
+                            <a class="ws-link" href="/workspace/{{ match.case2.case_id }}">{{ match.case2.case_id }}</a>
+                            <br><span style="font-size: 11px; color: var(--text-muted);">{{ match.case2.case_name }}</span>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 8px;">
+                                <strong style="color: #fff; font-size: 1.05rem;">{{ match.strength }}%</strong>
+                                <div class="progress-bar-container" style="width: 80px; height: 6px; margin: 0;">
+                                    <div class="progress-bar-fill" style="width: {{ match.strength }}%; background-color: {% if match.strength >= 80 %}var(--color-high){% elif match.strength >= 50 %}var(--color-medium){% else %}var(--color-low){% endif %};"></div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="chip-container">
+                                {% for item in match.shared_indicators[:5] %}
+                                <span class="chip active" style="font-size: 10px; padding: 2px 4px;">{{ item.type }}: {{ item.value }}</span>
+                                {% endfor %}
+                                {% if match.shared_indicators|length > 5 %}
+                                <span class="chip" style="font-size: 10px; padding: 2px 4px;">+{{ match.shared_indicators|length - 5 }} more</span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td style="font-size: 13px; line-height: 1.4;">
+                            {% for reason in match.explanation %}
+                                • {{ reason }}{% if not loop.last %}<br>{% endif %}
+                            {% endfor %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-circle-question"></i>
+            <p>No similar cases discovered.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endif %}
+
+{% if comparison %}
+<div class="card">
+    <div class="card-header">
+        <h3>Direct Comparison: {{ comparison.case1.case_id }} vs {{ comparison.case2.case_id }}</h3>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: start;">
+            <div>
+                <dl class="ws-kv">
+                    <dt>Similarity Index</dt>
+                    <dd>
+                        <strong style="color: #fff; font-size: 1.25rem;">{{ comparison.strength }}%</strong>
+                    </dd>
+                    <dt>Total Shared Coordinates</dt>
+                    <dd>{{ comparison.shared_count }} nodes</dd>
+                    <dt>Reasoning</dt>
+                    <dd>{{ comparison.explanation|join("; ") }}</dd>
+                </dl>
+            </div>
+            
+            <div style="background-color: rgba(0, 0, 0, 0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <h4 style="margin-top: 0; margin-bottom: 10px; color: var(--text-primary); font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em;">Overlapping Nodes</h4>
+                <div class="chip-container">
+                    {% for item in comparison.shared_indicators %}
+                    <span class="chip active">{{ item.type }}: {{ item.value }}</span>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

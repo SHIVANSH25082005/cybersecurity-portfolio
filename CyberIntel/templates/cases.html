@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>All Investigations</h1>
+    </div>
+    <div class="workspace-actions">
+        <a href="/add_case" class="btn btn-primary"><i class="fa-solid fa-folder-plus"></i> Create New Case</a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Cases Registry</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Registry ID</th>
+                        <th>Case File ID</th>
+                        <th>Case Name</th>
+                        <th>Classification Type</th>
+                        <th>Investigating Officer</th>
+                        <th>Status</th>
+                        <th>Registration Date</th>
+                        <th style="text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for case in cases %}
+                    <tr>
+                        <td style="font-family: var(--font-mono);">{{ case[0] }}</td>
+                        <td><strong style="color: #fff; font-family: var(--font-mono);">{{ case[1] }}</strong></td>
+                        <td><span style="font-weight: 600; color: #fff;">{{ case[2] }}</span></td>
+                        <td>{{ case[3] }}</td>
+                        <td><i class="fa-solid fa-user-shield" style="font-size: 0.8rem; color: var(--text-muted); margin-right: 5px;"></i>{{ case[4] }}</td>
+                        <td>
+                            {% set status_lower = case[5]|lower %}
+                            {% if "close" in status_lower %}
+                            <span class="badge badge-muted">{{ case[5] }}</span>
+                            {% elif "under" in status_lower %}
+                            <span class="badge badge-info">{{ case[5] }}</span>
+                            {% else %}
+                            <span class="badge badge-low">{{ case[5] }}</span>
+                            {% endif %}
+                        </td>
+                        <td style="font-family: var(--font-mono); font-size: 13px;">{{ case[6] }}</td>
+                        <td>
+                            <div style="display: flex; gap: 8px; justify-content: center;">
+                                <a class="btn btn-sm btn-primary" href="/workspace/{{ case[1] }}">
+                                    <i class="fa-solid fa-folder-open"></i> Open Workspace
+                                </a>
+                                <a class="btn btn-sm btn-outline" href="/download_report/{{ case[1] }}">
+                                    <i class="fa-solid fa-download"></i> Report
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

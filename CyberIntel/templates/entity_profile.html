@@ -1,0 +1,386 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>{{ summary.value }}</h1>
+        <p class="subtitle">Intelligence profile and target identity coordinate details.</p>
+    </div>
+    <div class="workspace-actions">
+        <a class="btn" href="/records">All Records</a>
+        <a class="btn" href="/fusion">Fusion Graph</a>
+    </div>
+</div>
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <span>Risk Score</span>
+        <strong class="level-{{ summary.risk_level|lower }}">{{ summary.risk_level }}</strong>
+        <small>{{ summary.risk_points }} points</small>
+    </div>
+    <div class="metric-card">
+        <span>Confidence</span>
+        <strong class="level-{{ summary.confidence|lower }}">{{ summary.confidence }}</strong>
+        <small>relationship strength</small>
+    </div>
+    <div class="metric-card">
+        <span>Occurrences</span>
+        <strong>{{ summary.occurrence_count }}</strong>
+    </div>
+    <div class="metric-card">
+        <span>Linked Cases</span>
+        <strong>{{ summary.linked_case_count }}</strong>
+    </div>
+    <div class="metric-card">
+        <span>First Seen</span>
+        <strong style="font-size:15px;">{{ summary.first_seen or "—" }}</strong>
+    </div>
+    <div class="metric-card">
+        <span>Last Seen</span>
+        <strong style="font-size:15px;">{{ summary.last_seen or "—" }}</strong>
+    </div>
+</div>
+
+<div class="ws-toolbar">
+    <button type="button" id="ws-expand-all">Expand All</button>
+    <button type="button" id="ws-collapse-all">Collapse All</button>
+</div>
+
+<div class="ws-grid" id="ep-root"
+     data-type="{{ summary.entity_type }}" data-value="{{ summary.value }}">
+
+    <!-- CORE DETAILS (server-rendered, no extra query) -->
+    <details class="ws-card" open>
+        <summary><span>Core Details</span></summary>
+        <div class="ws-card-body">
+            <dl class="ws-kv">
+                <dt>Type</dt><dd>{{ summary.entity_type }}</dd>
+                <dt>Value</dt><dd>{{ summary.value }}</dd>
+                <dt>Risk</dt><dd>{{ summary.risk_level }} ({{ summary.risk_points }} pts)</dd>
+                <dt>Confidence</dt><dd>{{ summary.confidence }}</dd>
+                <dt>Occurrences</dt><dd>{{ summary.occurrence_count }}</dd>
+                <dt>First Seen</dt><dd>{{ summary.first_seen or "—" }}</dd>
+                <dt>Last Seen</dt><dd>{{ summary.last_seen or "—" }}</dd>
+                <dt>Linked Cases</dt><dd>{{ summary.linked_case_count }} ({% for c in summary.linked_cases %}<a href="/workspace/{{ c }}">{{ c }}</a>{% if not loop.last %}, {% endif %}{% endfor %})</dd>
+            </dl>
+            {% if summary.source_counts %}
+            <p class="ws-sub" style="margin-top:10px;">Seen in:
+                {% for src, n in summary.source_counts.items() %}
+                <span class="badge">{{ src }}: {{ n }}</span>
+                {% endfor %}
+            </p>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- DYNAMIC SECTIONS (lazy; registry-driven, future modules plug in here) -->
+    {% for section in sections %}
+    <details class="ws-card ws-async{% if section.span %} span-2{% endif %}"
+             data-slug="{{ section.slug }}"
+             data-endpoint="/entity/api/section/{{ section.slug }}"
+             data-render="{{ section.render }}">
+        <summary>
+            <span>{{ section.title }}</span>
+            <span class="ws-hint">{{ section.hint }}</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-async-body"><p class="ws-msg">Expand to load…</p></div>
+        </div>
+    </details>
+    {% endfor %}
+
+</div>
+
+<script>
+(function () {
+
+    var root = document.getElementById("ep-root");
+    var ENTITY_TYPE = root.dataset.type;
+    var ENTITY_VALUE = root.dataset.value;
+
+    function fmt(v) {
+        return (v === null || v === undefined || v === "") ? "—" : v;
+    }
+    function esc(v) {
+        return String(fmt(v))
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+    function q(type, value) {
+        return "type=" + encodeURIComponent(type) + "&value=" + encodeURIComponent(value);
+    }
+
+    // ---- Generic renderer: {kv} / {rows} / {message} ----
+    window.epRenderGeneric = function (target, data, card) {
+        if (data.message) {
+            target.innerHTML = '<p class="ws-msg">' + esc(data.message) + '</p>';
+            return;
+        }
+        if (data.kv) {
+            var dl = Object.keys(data.kv).map(function (k) {
+                return '<dt>' + esc(k) + '</dt><dd>' + esc(data.kv[k]) + '</dd>';
+            }).join("");
+            target.innerHTML = '<dl class="ws-kv">' + dl + '</dl>';
+            return;
+        }
+        var rows = data.rows || [];
+        if (!rows.length && (!data.page || data.page === 1)) {
+            target.innerHTML = '<p class="ws-msg">Nothing found for this entity.</p>';
+            return;
+        }
+        var list = target.querySelector(".ep-list");
+        if (!list) {
+            target.innerHTML = '<p class="ws-sub ep-count"></p><div class="ep-list"></div>' +
+                '<div class="ep-more-wrap"></div>';
+            list = target.querySelector(".ep-list");
+        }
+        list.insertAdjacentHTML("beforeend", rows.map(function (r) {
+            var inner =
+                '<span class="badge">' + esc(r.badge) + '</span>' +
+                '<span class="ws-act-label">' + esc(r.label) + '</span>' +
+                '<span class="ws-sub">' + esc(r.sub) + '</span>';
+            if (r.href) {
+                return '<a class="ws-act-item ep-row-link" href="' + r.href + '">' + inner + '</a>';
+            }
+            return '<div class="ws-act-item">' + inner + '</div>';
+        }).join(""));
+
+        target.querySelector(".ep-count").textContent =
+            "Showing " + list.children.length + " of " + fmt(data.total);
+
+        var moreWrap = target.querySelector(".ep-more-wrap");
+        moreWrap.innerHTML = "";
+        if (data.has_more) {
+            var btn = document.createElement("button");
+            btn.type = "button";
+            btn.textContent = "Load more";
+            btn.addEventListener("click", function () {
+                btn.disabled = true;
+                var next = (data.page || 1) + 1;
+                fetch(card.dataset.endpoint + "?" + q(ENTITY_TYPE, ENTITY_VALUE) + "&page=" + next)
+                    .then(function (r) { return r.json(); })
+                    .then(function (d) { epRenderGeneric(target, d, card); })
+                    .catch(function () { btn.disabled = false; });
+            });
+            moreWrap.appendChild(btn);
+        }
+    };
+
+    // ---- Timeline renderer (reuses timeline engine output) ----
+    window.epRenderTimeline = function (target, data) {
+        if (!data.events || !data.events.length) {
+            target.innerHTML = '<p class="ws-msg">No timeline events for this entity.</p>';
+            return;
+        }
+        var rows = data.events.map(function (e) {
+            return '<div class="ws-tl-item"><span class="ws-tl-time">' + esc(e.timestamp) +
+                ' · ' + esc(e.case_id) + '</span><span class="ws-tl-title">' + esc(e.title) +
+                '</span><span class="ws-tl-detail">' + esc(e.details) + '</span></div>';
+        }).join("");
+        target.innerHTML = '<p class="ws-sub">Showing ' + esc(data.shown) + ' of ' +
+            esc(data.total) + ' event(s), most recent first.</p>' + rows;
+    };
+
+    // ---- Graph renderer (Fusion Engine, zoomable + expandable) ----
+    window.epRenderGraph = function (target, data) {
+        var SVG_W = 1000, SVG_H = 520;
+        var nodes = {}, edges = {};
+        var view = { k: 1, tx: 0, ty: 0 };
+        var TYPE_COLORS = {
+            "Case": "#2563eb", "Complaint": "#f59e0b", "Phone": "#10b981",
+            "Email": "#a855f7", "UPI": "#14b8a6", "Telegram": "#0ea5e9",
+            "Website": "#94a3b8", "IP": "#f87171", "Evidence": "#eab308",
+            "Investigator": "#ec4899", "BankAccount": "#22c55e",
+            "Wallet": "#84cc16", "IMEI": "#fb923c"
+        };
+
+        target.innerHTML =
+            '<div class="ep-graph-canvas">' +
+            '<svg class="ep-graph-svg" viewBox="0 0 ' + SVG_W + ' ' + SVG_H +
+            '" preserveAspectRatio="xMidYMid meet"></svg></div>' +
+            '<div class="ep-graph-bar">' +
+            '<button type="button" class="ep-graph-reset">Reset View</button>' +
+            '<span class="ws-sub ep-graph-info">Click a node to expand · double-click to open its profile.</span>' +
+            '</div>';
+
+        var svg = target.querySelector(".ep-graph-svg");
+        var info = target.querySelector(".ep-graph-info");
+        var panState = { dragging: false, sx: 0, sy: 0, moved: false };
+
+        function transformStr() {
+            return "translate(" + view.tx + "," + view.ty + ") scale(" + view.k + ")";
+        }
+        function applyTransform() {
+            var g = svg.querySelector("#ep-vp");
+            if (g) { g.setAttribute("transform", transformStr()); }
+        }
+        function placeAround(cx, cy, count, i, radius) {
+            var a = (2 * Math.PI * i) / Math.max(count, 1);
+            return { x: cx + radius * Math.cos(a), y: cy + radius * Math.sin(a) };
+        }
+        function addNode(n, x, y, depth) {
+            if (nodes[n.id]) { return nodes[n.id]; }
+            n.x = x; n.y = y; n.depth = depth;
+            nodes[n.id] = n;
+            return n;
+        }
+        function addEdge(e) {
+            var k = e.source + "|" + e.target;
+            if (!edges[k]) { edges[k] = e; }
+        }
+
+        function ingest(payload, center, depth) {
+            var others = (payload.nodes || []).filter(function (n) { return n.id !== payload.center; });
+            var radius = Math.max(90, 210 - depth * 30);
+            others.forEach(function (n, i) {
+                var p = placeAround(center.x, center.y, others.length, i, radius);
+                addNode(n, p.x, p.y, depth);
+            });
+            (payload.edges || []).forEach(addEdge);
+        }
+
+        function expand(node) {
+            if (node.cluster) {
+                fetchNeighbors(node.parent_type, node.parent_value, node, node.cluster_type, 200);
+                delete nodes[node.id];
+                return;
+            }
+            fetchNeighbors(node.type, node.value, node, "", 40);
+        }
+
+        function fetchNeighbors(type, value, center, onlyType, limit) {
+            var url = "/fusion/api/neighbors?type=" + encodeURIComponent(type) +
+                "&value=" + encodeURIComponent(value) + "&limit=" + limit;
+            if (onlyType) { url += "&types=" + encodeURIComponent(onlyType); }
+            fetch(url).then(function (r) { return r.json(); }).then(function (payload) {
+                ingest(payload, center, (center.depth || 0) + 1);
+                render();
+            }).catch(function () {});
+        }
+
+        function render() {
+            var parts = [];
+            Object.keys(edges).forEach(function (k) {
+                var e = edges[k], a = nodes[e.source], b = nodes[e.target];
+                if (!a || !b) { return; }
+                parts.push('<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x +
+                    '" y2="' + b.y + '" stroke="#475569" stroke-width="1"/>');
+            });
+            Object.keys(nodes).forEach(function (id) {
+                var n = nodes[id];
+                var color = TYPE_COLORS[n.type] || "#64748b";
+                var r = n.depth === 0 ? 13 : (n.cluster ? 9 : 8);
+                var label = String(n.label || n.value || "");
+                if (label.length > 22) { label = label.slice(0, 21) + "…"; }
+                var dashed = n.cluster ? ' stroke="#e2e8f0" stroke-dasharray="3,2"' : '';
+                parts.push('<g class="ep-node" data-id="' + esc(id) + '" style="cursor:pointer">');
+                parts.push('<circle cx="' + n.x + '" cy="' + n.y + '" r="' + r +
+                    '" fill="' + color + '"' + dashed + '/>');
+                parts.push('<text x="' + (n.x + r + 4) + '" y="' + (n.y + 4) +
+                    '" font-size="11" fill="#e2e8f0">' + esc(label) + '</text>');
+                parts.push('</g>');
+            });
+            svg.innerHTML = '<g id="ep-vp" transform="' + transformStr() + '">' + parts.join("") + '</g>';
+
+            svg.querySelectorAll(".ep-node").forEach(function (g) {
+                var node = nodes[g.getAttribute("data-id")];
+                g.addEventListener("click", function () {
+                    if (panState.moved || !node) { return; }
+                    info.textContent = node.type + " : " + node.value;
+                    expand(node);
+                });
+                g.addEventListener("dblclick", function () {
+                    if (node && !node.cluster) {
+                        window.location.href = "/entity?" + q(node.type, node.value);
+                    }
+                });
+            });
+        }
+
+        // zoom + pan (clutter control, mirrors the Fusion graph)
+        svg.addEventListener("wheel", function (e) {
+            e.preventDefault();
+            var rect = svg.getBoundingClientRect();
+            if (!rect.width) { return; }
+            var px = (e.clientX - rect.left) / rect.width * SVG_W;
+            var py = (e.clientY - rect.top) / rect.height * SVG_H;
+            var factor = e.deltaY < 0 ? 1.1 : 0.9;
+            var newK = Math.min(4, Math.max(0.3, view.k * factor));
+            view.tx = px - (px - view.tx) * (newK / view.k);
+            view.ty = py - (py - view.ty) * (newK / view.k);
+            view.k = newK;
+            applyTransform();
+        }, { passive: false });
+        svg.addEventListener("mousedown", function (e) {
+            panState.dragging = true; panState.moved = false;
+            panState.sx = e.clientX; panState.sy = e.clientY;
+            svg.style.cursor = "grabbing";
+        });
+        svg.addEventListener("mousemove", function (e) {
+            if (!panState.dragging) { return; }
+            var rect = svg.getBoundingClientRect();
+            if (!rect.width) { return; }
+            if (Math.abs(e.clientX - panState.sx) > 3 ||
+                Math.abs(e.clientY - panState.sy) > 3) { panState.moved = true; }
+            view.tx += (e.clientX - panState.sx) / rect.width * SVG_W;
+            view.ty += (e.clientY - panState.sy) / rect.height * SVG_H;
+            panState.sx = e.clientX; panState.sy = e.clientY;
+            applyTransform();
+        });
+        window.addEventListener("mouseup", function () {
+            panState.dragging = false; svg.style.cursor = "grab";
+        });
+        svg.style.cursor = "grab";
+        target.querySelector(".ep-graph-reset").addEventListener("click", function () {
+            view.k = 1; view.tx = 0; view.ty = 0; applyTransform();
+        });
+
+        // seed from the fusion payload (center + first hop)
+        var centerId = data.center;
+        var centerNode = (data.nodes || []).filter(function (n) { return n.id === centerId; })[0];
+        if (!centerNode) {
+            target.innerHTML = '<p class="ws-msg">No relationships found for this entity.</p>';
+            return;
+        }
+        addNode(centerNode, SVG_W / 2, SVG_H / 2, 0);
+        ingest(data, centerNode, 1);
+        render();
+    };
+
+    // ---- Lazy loader ----
+    function load(card) {
+        if (card.dataset.loaded === "1" || card.dataset.loading === "1") { return; }
+        card.dataset.loading = "1";
+        var body = card.querySelector(".ws-async-body");
+        var renderer = window[card.dataset.render] || window.epRenderGeneric;
+        fetch(card.dataset.endpoint + "?" + q(ENTITY_TYPE, ENTITY_VALUE))
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                renderer(body, d, card);
+                card.dataset.loaded = "1";
+                card.dataset.loading = "";
+            })
+            .catch(function () {
+                body.innerHTML = '<p class="ws-msg ws-error">Could not load this section. Collapse and expand to retry.</p>';
+                card.dataset.loading = "";
+            });
+    }
+
+    document.querySelectorAll("details.ws-async").forEach(function (card) {
+        card.addEventListener("toggle", function () {
+            if (card.open) { load(card); }
+        });
+    });
+
+    var allCards = document.querySelectorAll("details.ws-card");
+    document.getElementById("ws-expand-all").addEventListener("click", function () {
+        allCards.forEach(function (d) { d.open = true; });
+    });
+    document.getElementById("ws-collapse-all").addEventListener("click", function () {
+        allCards.forEach(function (d) { d.open = false; });
+    });
+
+})();
+</script>
+
+{% endblock %}

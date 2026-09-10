@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cybercrime Intelligence & Investigation Platform</title>
+
+    <!-- Load Global Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
+    <!-- Load Vis.js Network Globally for Modernized Graphs -->
+    <link href="https://unpkg.com/vis-network/styles/vis-network.min.css" rel="stylesheet" type="text/css" />
+    <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+</head>
+<body>
+
+    <div class="sidebar">
+        <h2><i class="fa-solid fa-shield-halved"></i> CyberIntel</h2>
+
+        <a href="/" id="nav-dashboard"><i class="fa-solid fa-chart-line"></i> Dashboard</a>
+
+        <hr>
+
+        <h4>Case Management</h4>
+        <a href="/complaint" id="nav-complaint"><i class="fa-solid fa-file-invoice"></i> Register Complaint</a>
+        <a href="/add_case" id="nav-add-case"><i class="fa-solid fa-folder-plus"></i> Create Case</a>
+        <a href="/add_intelligence" id="nav-add-intel"><i class="fa-solid fa-brain"></i> Add Intelligence</a>
+        <a href="/cases" id="nav-cases"><i class="fa-solid fa-folder-open"></i> View Cases</a>
+        <a href="/ipdr_upload" id="nav-ipdr-upload"><i class="fa-solid fa-cloud-arrow-up"></i> IPDR Upload</a>
+
+        <hr>
+
+        <h4>Intelligence Center</h4>
+        <a href="/records" id="nav-records"><i class="fa-solid fa-database"></i> Records</a>
+        <a href="/ipdr_records" id="nav-ipdr-records"><i class="fa-solid fa-rectangle-list"></i> IPDR Records</a>
+
+        <hr>
+
+        <h4>Analysis Center</h4>
+        <a href="/common_ip" id="nav-common-ip"><i class="fa-solid fa-network-wired"></i> Common IP Analysis</a>
+        <a href="/ip_relationships" id="nav-ip-rel"><i class="fa-solid fa-diagram-project"></i> IP Relationships</a>
+        <a href="/case_correlation" id="nav-case-corr"><i class="fa-solid fa-arrows-spin"></i> Case Correlation</a>
+        <a href="/case_similarity" id="nav-case-sim"><i class="fa-solid fa-clone"></i> Case Similarity</a>
+        <a href="/modus_operandi" id="nav-modus"><i class="fa-solid fa-mask"></i> Modus Operandi</a>
+        <a href="/sop" id="nav-sop"><i class="fa-solid fa-book"></i> Knowledge Base / SOPs</a>
+        <a href="/geo_spatial" id="nav-geo"><i class="fa-solid fa-map-location-dot"></i> Geo-spatial Intel</a>
+        <a href="/ipdr_case_correlation" id="nav-ipdr-corr"><i class="fa-solid fa-phone-volume"></i> IPDR Correlation</a>
+        <a href="/confidence_analysis" id="nav-confidence"><i class="fa-solid fa-shield-halved"></i> Confidence Analysis</a>
+        <a href="/intelligence_assessment" id="nav-assessment"><i class="fa-solid fa-file-shield"></i> Intel Assessment</a>
+        <a href="/timeline_reconstruction" id="nav-timeline"><i class="fa-solid fa-clock-rotate-left"></i> Timeline</a>
+
+        <hr>
+
+        <h4>Graph Center</h4>
+        <a href="/link_analysis" id="nav-link-analysis"><i class="fa-solid fa-circle-nodes"></i> Link Analysis</a>
+        <a href="/case_correlation_graph" id="nav-case-graph"><i class="fa-solid fa-hubspot"></i> Case Corr. Graph</a>
+        <a href="/fusion" id="nav-fusion"><i class="fa-solid fa-filter-circle-dollar"></i> Intel Fusion</a>
+    </div>
+
+    <div class="main-content">
+        {% block content %}
+        {% endblock %}
+    </div>
+
+    <!-- Active State Highlight Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var currentPath = window.location.pathname;
+            var navLinks = document.querySelectorAll(".sidebar a");
+            
+            navLinks.forEach(function(link) {
+                var href = link.getAttribute("href");
+                // Match exact dashboard or correct prefix
+                if (href === currentPath || (href !== "/" && currentPath.startsWith(href))) {
+                    link.classList.add("active");
+                }
+            });
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<style>
+    /* Semantic Confidence Badge Classes */
+    .badge-strong {
+        background-color: var(--color-low-bg);
+        color: var(--color-low);
+        border: 1px solid rgba(16, 185, 129, 0.25);
+    }
+    .badge-moderate {
+        background-color: var(--color-medium-bg);
+        color: var(--color-medium);
+        border: 1px solid rgba(234, 179, 8, 0.25);
+    }
+    .badge-limited {
+        background-color: var(--color-info-bg);
+        color: var(--color-info);
+        border: 1px solid rgba(14, 165, 233, 0.25);
+    }
+    .badge-insufficient {
+        background-color: rgba(148, 163, 184, 0.1);
+        color: var(--text-secondary);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+</style>
+
+<div class="workspace-header">
+    <div>
+        <h1>Confidence Analysis</h1>
+        <p class="subtitle">Confidence analysis for shared IP infrastructure.</p>
+    </div>
+</div>
+
+<!-- IP Infrastructure-Level Explanation Note -->
+<div style="padding: 12px 16px; background: rgba(14, 165, 233, 0.05); border-left: 4px solid var(--color-info, #0ea5e9); border-radius: 4px; font-size: 13px; line-height: 1.5; color: #cbd5e1; margin-bottom: 20px;">
+    <strong><i class="fa-solid fa-circle-info"></i> IP Infrastructure-Level Confidence:</strong> The confidence score is calculated once per shared IP infrastructure using infrastructure-level indicators, corroboration, completeness, temporal evidence, and contradiction analysis. Therefore, every device pair associated with the same IP displays the same confidence rating, while temporal gaps remain pair-specific.
+</div>
+
+<div class="card">
+    <div class="card-header">
+        <h3>Co-Accessing Device Pairs Sharing IP Infrastructure</h3>
+    </div>
+    <div class="card-body" style="padding: 0;">
+        {% if results %}
+        <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Suspect IP Address</th>
+                        <th>suspect Device A</th>
+                        <th>suspect Device B</th>
+                        <th>IP Fan-Out Score</th>
+                        <th>Temporal Gap (mins)</th>
+                        <th>IP Infrastructure Confidence</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in results %}
+                    <tr>
+                        <td><strong style="color: #fff; font-family: var(--font-mono);">{{ row["ip"] }}</strong></td>
+                        <td style="font-family: var(--font-mono);">{{ row["phone_a"] }}</td>
+                        <td style="font-family: var(--font-mono);">{{ row["phone_b"] }}</td>
+                        <td>{{ row["fanout"] }} phone(s)</td>
+                        <td style="font-family: var(--font-mono);">{{ row["minutes"] }} min(s)</td>
+                        <td>
+                            {% if row["final_confidence"] == "Strong" %}
+                                <span class="badge badge-strong"><i class="fa-solid fa-circle-check"></i> Strong</span>
+                            {% elif row["final_confidence"] == "Moderate" %}
+                                <span class="badge badge-moderate"><i class="fa-solid fa-circle-exclamation"></i> Moderate</span>
+                            {% elif row["final_confidence"] == "Limited" %}
+                                <span class="badge badge-limited"><i class="fa-solid fa-circle-exclamation"></i> Limited</span>
+                            {% elif row["final_confidence"] == "Insufficient Evidence" %}
+                                <span class="badge badge-insufficient"><i class="fa-solid fa-triangle-exclamation"></i> Insufficient Evidence</span>
+                            {% else %}
+                                <span class="badge badge-insufficient">{{ row["final_confidence"] }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="empty-state">
+            <i class="fa-solid fa-shield-halved"></i>
+            <p>No confidence records calculated.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

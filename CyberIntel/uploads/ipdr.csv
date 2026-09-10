@@ -1,0 +1,3 @@
+msisdn,source_ip,date,time,location,cell_tower_id,tower_name,country,state,district,city,latitude,longitude
+9876543201,103.88.44.11,2026-07-02,10:00:00,"Connaught Place, Delhi",Tower-DL-01,Delhi CP,India,Delhi,New Delhi,Delhi,28.6289,77.215
+9876543201,103.88.44.11,2026-07-02,10:20:00,"Mumbai Central, Maharashtra",Tower-MH-01,Mumbai Central,India,Maharashtra,Mumbai City,Mumbai,18.9712,72.8194

@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Knowledge Base &amp; Standard Operating Procedures</h1>
+    </div>
+</div>
+
+<!-- Category Filtering Bar -->
+<div style="display: flex; gap: 8px; margin-bottom: 20px; flex-wrap: wrap;">
+    <a href="/sop" class="btn btn-sm {% if not current_category %}btn-primary{% else %}btn-outline{% endif %}">All Categories</a>
+    <a href="/sop?category=cybercrime_workflows" class="btn btn-sm {% if current_category == 'cybercrime_workflows' %}btn-primary{% else %}btn-outline{% endif %}">Cybercrime Workflows</a>
+    <a href="/sop?category=investigation_guides" class="btn btn-sm {% if current_category == 'investigation_guides' %}btn-primary{% else %}btn-outline{% endif %}">Investigation Guides</a>
+    <a href="/sop?category=legal_procedures" class="btn btn-sm {% if current_category == 'legal_procedures' %}btn-primary{% else %}btn-outline{% endif %}">Legal Procedures</a>
+    <a href="/sop?category=general_documentation" class="btn btn-sm {% if current_category == 'general_documentation' %}btn-primary{% else %}btn-outline{% endif %}">General Documentation</a>
+</div>
+
+<!-- Search Form -->
+<form method="GET" action="/sop" style="flex-direction: row; gap: 10px; margin-bottom: 25px; align-items: center; flex-wrap: wrap;">
+    {% if current_category %}
+    <input type="hidden" name="category" value="{{ current_category }}">
+    {% endif %}
+    <input type="text" name="q" value="{{ query or '' }}" placeholder="Search SOPs, legal sections, target entities, steps..." style="flex: 1; max-width: 500px; min-width: 250px;">
+    <button type="submit" class="btn btn-primary"><i class="fa-solid fa-magnifying-glass"></i> Search KB</button>
+    {% if query or current_category %}
+    <a href="/sop" class="btn btn-ghost btn-sm" style="color: var(--text-muted) !important;"><i class="fa-solid fa-xmark"></i> Clear Filters</a>
+    {% endif %}
+</form>
+
+<div class="ws-grid">
+    {% if sops %}
+        {% for sop in sops %}
+        <details class="ws-card span-2" {% if sops|length == 1 or query %}open{% endif %}>
+            <summary>
+                <span>{{ sop.title }}</span>
+                <span class="badge badge-muted" style="text-transform: uppercase;">{{ sop.category.replace('_', ' ') }}</span>
+            </summary>
+            <div class="ws-card-body">
+                <p style="color: var(--text-secondary); font-size: 14px; margin-top: 0; line-height: 1.6;">{{ sop.description }}</p>
+                
+                <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px; margin-top: 20px; align-items: start;">
+                    <!-- Steps -->
+                    <div>
+                        <h4 style="margin: 0 0 10px 0; color: var(--primary); font-size: 13px; text-transform: uppercase; letter-spacing: 0.03em;">Investigative Action Steps</h4>
+                        <ol style="margin: 0; padding-left: 20px; color: var(--text-primary); font-size: 13px; line-height: 1.6;">
+                            {% for step in sop.steps %}
+                            <li style="margin-bottom: 8px;">{{ step }}</li>
+                            {% endfor %}
+                        </ol>
+                    </div>
+                    
+                    <!-- Legal & Resources -->
+                    <div style="display: flex; flex-direction: column; gap: 15px;">
+                        {% if sop.legal_provisions %}
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--color-high); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;">Legal Provisions</h4>
+                            <ul style="margin: 0; padding-left: 15px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; list-style: disc;">
+                                {% for prov in sop.legal_provisions %}
+                                <li style="margin-bottom: 4px;">{{ prov }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                        
+                        {% if sop.resources %}
+                        <div>
+                            <h4 style="margin: 0 0 5px 0; color: var(--color-low); font-size: 11px; text-transform: uppercase; letter-spacing: 0.03em;">Reference Resources</h4>
+                            <ul style="margin: 0; padding-left: 15px; color: var(--text-secondary); font-size: 12px; line-height: 1.5; list-style: disc;">
+                                {% for res in sop.resources %}
+                                <li style="margin-bottom: 4px;">{{ res }}</li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                {% if sop.target_case_types or sop.target_mo_categories %}
+                <div style="margin-top: 20px; border-top: 1px solid var(--border-subtle); padding-top: 10px; font-size: 11px; color: var(--text-muted); display: flex; gap: 20px; flex-wrap: wrap;">
+                    {% if sop.target_case_types %}
+                    <span><b>Target Case Types:</b> {{ sop.target_case_types|join(', ') }}</span>
+                    {% endif %}
+                    {% if sop.target_mo_categories %}
+                    <span><b>Target Modus Operandi:</b> {{ sop.target_mo_categories|join(', ') }}</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </details>
+        {% endfor %}
+    {% else %}
+        <div class="empty-state span-2">
+            <i class="fa-solid fa-book-bookmark"></i>
+            <h3>No results found</h3>
+            <p>No reference SOP articles match your active filter keywords or category parameters.</p>
+            <a href="/sop" class="btn btn-primary btn-sm">Clear Search Filter</a>
+        </div>
+    {% endif %}
+</div>
+
+{% endblock %}

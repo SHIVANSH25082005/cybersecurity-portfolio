@@ -1,0 +1,2026 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+
+{% set report = workspace.report %}
+{% set case = report.case %}
+
+<div class="workspace-header">
+    <div>
+        <h1>{{ case[1] }} - {{ case[2] }}</h1>
+        <p class="subtitle">Investigation management and coordinated evidence profile.</p>
+    </div>
+
+    <div class="workspace-actions">
+        <a class="btn btn-outline" href="/cases">All Cases</a>
+        <a class="btn btn-outline" href="/assessment/{{ case[1] }}">Assessment</a>
+        <a class="btn btn-outline" href="/timeline_reconstruction?case_id={{ case[1] }}">Timeline</a>
+        <a class="btn btn-outline" href="/link_analysis">Graph</a>
+        <a class="btn btn-outline" href="/case_similarity?case_id={{ case[1] }}">Similarity</a>
+        <a class="btn btn-outline" href="/download_report/{{ case[1] }}">Report</a>
+        <form action="/workspace/{{ case[1] }}/toggle_status" method="POST" style="display: inline-block; margin: 0;">
+            {% if case[5] == 'Closed' %}
+            <button type="submit" class="btn btn-outline" style="cursor: pointer; color: var(--primary); outline: none;"><i class="fa-solid fa-lock-open"></i> Reopen Case</button>
+            {% else %}
+            <button type="submit" class="btn btn-outline" style="cursor: pointer; color: #ef4444; outline: none;"><i class="fa-solid fa-lock"></i> Close Case</button>
+            {% endif %}
+        </form>
+    </div>
+</div>
+
+<div class="workspace-nav">
+    <a class="ws-nav-link active" href="/workspace/{{ case[1] }}">Overview</a>
+    <a class="ws-nav-link" href="#evidence">Evidence</a>
+    <a class="ws-nav-link" href="/timeline_reconstruction?case_id={{ case[1] }}">Timeline</a>
+    <a class="ws-nav-link" href="#tasks">Tasks</a>
+    <a class="ws-nav-link" href="#notes">Notes</a>
+    <a class="ws-nav-link" href="/workspace/{{ case[1] }}/legal">Legal Correspondence</a>
+</div>
+
+
+<div class="metric-grid">
+    <div class="metric-card">
+        <span>Risk</span>
+        <strong class="level-{{ report.risk_level|lower }}">
+            {{ report.risk_level }}
+        </strong>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Risk?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                <strong>Score Components:</strong><br>
+                • Entities: {{ report.entity_count }} &times; 5 = {{ report.entity_risk_points }} pts<br>
+                • IPDR Logs: {{ report.ipdr_count }} &times; 2 = {{ report.ipdr_risk_points }} pts<br>
+                • Shared Infra: {{ report.correlation_risk_points }} pts<br>
+                <strong>Total Score:</strong> {{ report.risk_score }} pts<br>
+                <strong>Thresholds:</strong><br>
+                • LOW: &lt; 30 | MEDIUM: 30-59 | HIGH: &ge; 60<br>
+                <strong>Active Reasons:</strong>
+                <ul style="margin: 4px 0 0 12px; padding: 0; list-style: disc;">
+                    {% if report.risk_reasons %}
+                        {% for reason in report.risk_reasons %}
+                        <li>{{ reason }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No elevated risk reasons triggered.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Priority</span>
+        <strong class="level-{{ workspace.priority_level|lower }}">
+            {{ workspace.priority_level }}
+        </strong>
+        <small>{{ workspace.priority_points }} points</small>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Priority?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                <strong>Score Components:</strong><br>
+                {% set pb = workspace.priority_breakdown %}
+                • Risk Level ({{ pb.risk.level }}): +{{ pb.risk.points }} pts<br>
+                • Linked Cases ({{ pb.linked_cases.count }}): +{{ pb.linked_cases.points }} pts<br>
+                • Unique IPs ({{ pb.unique_ips.count }}): +{{ pb.unique_ips.points }} pts<br>
+                • Rapid Switches ({{ pb.rapid_switching.count }}): +{{ pb.rapid_switching.points }} pts<br>
+                • Complaints ({{ pb.complaints.count }}): +{{ pb.complaints.points }} pts<br>
+                • Financial Reuse ({{ pb.financial_reuse.count }}): +{{ pb.financial_reuse.points }} pts<br>
+                • High Alerts ({{ pb.high_alerts.count }}): +{{ pb.high_alerts.points }} pts<br>
+                • Similarity Top ({{ pb.similarity.score }}%): +{{ pb.similarity.points }} pts<br>
+                <strong>Total Score:</strong> {{ workspace.priority_points }} pts<br>
+                <strong>Thresholds:</strong><br>
+                • LOW: &lt; 25 | MEDIUM: 25-54 | HIGH: 55-89 | CRITICAL: &ge; 90
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Confidence</span>
+        <strong id="metric-confidence">…</strong>
+        <small>shared infrastructure</small>
+        <details id="metric-confidence-explain-card" class="metric-explain" style="margin-top: 8px; display: none;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Confidence?</summary>
+            <div id="metric-confidence-explain-content" style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                <!-- Populated dynamically by JS -->
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Linked Cases</span>
+        <strong>{{ workspace.linked_cases|length }}</strong>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Linked?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px; max-height: 120px; overflow-y: auto;">
+                {% if workspace.linked_cases %}
+                    <strong>Case Linkages:</strong>
+                    <ul style="margin: 4px 0 0 12px; padding: 0; list-style: disc;">
+                        {% for row in workspace.linked_cases %}
+                        <li>Case <strong>{{ row[0] }}</strong> linked via {{ row[1] }}: <code style="color: #60a5fa;">{{ row[2] }}</code></li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    No shared identity elements (Phone, UPI, Email, IP) detected with other investigations.
+                {% endif %}
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Similarity</span>
+        <strong>{{ workspace.similarity.top_score }}</strong>
+        <small>{{ workspace.similarity.results|length }} match(es)</small>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Similarity?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                {% if workspace.similarity.results %}
+                    {% set top_sim = workspace.similarity.results[0] %}
+                    <strong>Top Match:</strong> Case <strong>{{ top_sim.case2.case_id }}</strong> ({{ top_sim.strength }}% similarity)<br>
+                    <strong>Shared Indicators:</strong>
+                    <ul style="margin: 4px 0 0 12px; padding: 0; list-style: disc;">
+                        {% for item in top_sim.shared_indicators %}
+                        <li>Shared {{ item.type }}: <code>{{ item.value }}</code> (+{{ item.score }} pts)</li>
+                        {% endfor %}
+                    </ul>
+                    {% if top_sim.case_gap_days is not none and top_sim.case_gap_days <= 30 %}
+                    • Close case creation gap ({{ top_sim.case_gap_days }} days)<br>
+                    {% endif %}
+                    <strong>Formula:</strong> min(100, (raw_score / (total_weight + 20)) &times; 100)
+                {% else %}
+                    No overlapping indicators or metadata matches exist to compute similarity scores.
+                {% endif %}
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Entities</span>
+        <strong>{{ report.entity_count }}</strong>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Entities?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                <strong>Structured indicators:</strong>
+                <ul style="margin: 4px 0 0 12px; padding: 0; list-style: disc;">
+                    {% if workspace.entity_type_counts %}
+                        {% for etype, ecount in workspace.entity_type_counts.items() %}
+                        <li>{{ etype }}: {{ ecount }}</li>
+                        {% endfor %}
+                    {% else %}
+                        <li>No intelligence entities extracted yet.</li>
+                    {% endif %}
+                </ul>
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>IPDR Records</span>
+        <strong>{{ report.ipdr_count }}</strong>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why IPDR?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                Total of {{ report.ipdr_count }} telecom network access record(s) linked to this investigation.<br>
+                Contains {{ workspace.unique_ip_count }} unique IP address(es).
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Evidence</span>
+        <strong>{{ workspace.evidence_items|length }}</strong>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Evidence?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px;">
+                Total stored digital evidence: {{ workspace.evidence_items|length }} item(s).<br>
+                All evidence undergoes cryptographic SHA-256 integrity validation and chain-of-custody tracking.
+            </div>
+        </details>
+    </div>
+
+    <div class="metric-card">
+        <span>Alerts</span>
+        <strong class="{{ 'level-high' if workspace.alerts.counts.HIGH else 'level-low' }}">
+            {{ workspace.alerts.total }}
+        </strong>
+        <small>{{ workspace.alerts.counts.HIGH }} high</small>
+        <details class="metric-explain" style="margin-top: 8px;">
+            <summary style="cursor: pointer; font-size: 11px; color: #60a5fa; outline: none; list-style: none;">Why Alerts?</summary>
+            <div style="font-size: 11px; color: #cbd5e1; margin-top: 6px; line-height: 1.4; border-top: 1px solid #334155; padding-top: 6px; max-height: 120px; overflow-y: auto;">
+                <strong>Triggered Alerts:</strong><br>
+                • HIGH: {{ workspace.alerts.counts.HIGH }} | MEDIUM: {{ workspace.alerts.counts.MEDIUM }} | LOW: {{ workspace.alerts.counts.LOW }}
+                {% if workspace.alerts.alerts %}
+                    <ul style="margin: 4px 0 0 12px; padding: 0; list-style: disc;">
+                        {% for alert in workspace.alerts.alerts %}
+                        <li>[{{ alert.severity }}] {{ alert.type }}: {{ alert.message }}</li>
+                        {% endfor %}
+                    </ul>
+                {% else %}
+                    No active intelligence alerts.
+                {% endif %}
+            </div>
+        </details>
+    </div>
+</div>
+
+<div class="ws-toolbar">
+    <button type="button" id="ws-expand-all">Expand All</button>
+    <button type="button" id="ws-collapse-all">Collapse All</button>
+</div>
+
+<div class="ws-grid">
+
+    <!-- INVESTIGATION HYPOTHESIS -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Investigation Hypothesis</span>
+            <span class="ws-hint">Rule-Based Reasoning Engine</span>
+        </summary>
+        <div class="ws-card-body">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+                <div>
+                    <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Overall Assessment</h4>
+                    <p style="font-size: 15px; font-weight: bold; color: #fff; margin: 0 0 15px 0;">{{ workspace.hypothesis.overall_assessment }}</p>
+                    
+                    <h4 style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 8px 0;">Reasoning</h4>
+                    {% if workspace.hypothesis.reasoning %}
+                    <style>
+                    .hypothesis-reasoning-list {
+                        margin: 0;
+                        padding: 0;
+                        list-style: none;
+                    }
+                    .hypothesis-reasoning-list li.static-reasoning {
+                        margin-bottom: 8px;
+                        padding: 6px 12px 6px 29px;
+                        border-left: 3px solid #555;
+                        color: #ccc;
+                        font-size: 13px;
+                        font-weight: 500;
+                        background: rgba(255, 255, 255, 0.01);
+                        border-radius: 0 4px 4px 0;
+                    }
+                    .hypothesis-reasoning-list details {
+                        margin-bottom: 8px;
+                        border-radius: 4px;
+                        border: 1px solid #333;
+                        background: rgba(255, 255, 255, 0.01);
+                    }
+                    .hypothesis-reasoning-list details[open] {
+                        background: rgba(255, 255, 255, 0.03);
+                        border-color: #444;
+                    }
+                    .hypothesis-reasoning-list summary {
+                        cursor: pointer;
+                        padding: 8px 12px;
+                        font-weight: 600;
+                        color: #e4e4e7;
+                        user-select: none;
+                        display: flex;
+                        justify-content: space-between;
+                        align-items: center;
+                        outline: none;
+                        list-style: none;
+                    }
+                    .hypothesis-reasoning-list summary::-webkit-details-marker {
+                        display: none;
+                    }
+                    .hypothesis-reasoning-list summary .arrow {
+                        font-size: 9px;
+                        color: #888;
+                        transition: transform 0.2s ease;
+                        display: inline-block;
+                        width: 12px;
+                        text-align: center;
+                    }
+                    .hypothesis-reasoning-list details[open] summary .arrow {
+                        transform: rotate(90deg);
+                        color: #fff;
+                    }
+                    .hypothesis-reasoning-list summary .indicator {
+                        font-size: 9px;
+                        color: #666;
+                        transition: transform 0.2s ease;
+                        display: inline-block;
+                    }
+                    .hypothesis-reasoning-list details[open] summary .indicator {
+                        transform: rotate(180deg);
+                        color: #fff;
+                    }
+                    .hypothesis-reasoning-list summary::after {
+                        content: none !important;
+                    }
+                    .hypothesis-evidence-panel {
+                        padding: 12px 16px;
+                        border-top: 1px solid #222;
+                        font-size: 13px;
+                        color: #d4d4d8;
+                        background: rgba(0, 0, 0, 0.15);
+                    }
+                    .ws-link,
+                    .hypothesis-evidence-panel a {
+                        color: #60a5fa !important;
+                        text-decoration: none !important;
+                        transition: color 0.15s ease;
+                    }
+                    .ws-link:hover,
+                    .hypothesis-evidence-panel a:hover {
+                        color: #93c5fd !important;
+                        text-decoration: underline !important;
+                    }
+                    </style>
+                    <ul class="hypothesis-reasoning-list">
+                        {% for point in workspace.hypothesis.reasoning %}
+                            {% if point.has_evidence is defined and point.has_evidence %}
+                            <li style="list-style: none;">
+                                <details>
+                                    <summary>
+                                        <div style="display: flex; align-items: center; gap: 8px; text-align: left;">
+                                            <span class="arrow">▶</span>
+                                            <span>{{ point.text }}</span>
+                                        </div>
+                                        <span class="indicator">▼</span>
+                                    </summary>
+                                    <div class="hypothesis-evidence-panel">
+                                        {% if point.evidence_type == 'upi' %}
+                                            <div style="margin-bottom: 8px;">
+                                                <strong style="color: #60a5fa;">Shared UPI(s):</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                                                    {% for item in point.evidence_data.shared_upis %}
+                                                        <li><a class="ws-link" href="{{ item.link }}">{{ item.value }}</a></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% if point.evidence_data.linked_cases %}
+                                            <div>
+                                                <strong style="color: #fca5a5;">Linked Cases:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                                                    {% for item in point.evidence_data.linked_cases %}
+                                                        <li><a class="ws-link" href="{{ item.link }}">{{ item.id }}</a></li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                            {% endif %}
+                                        {% elif point.evidence_type == 'ip' %}
+                                            <div>
+                                                <strong style="color: #60a5fa;">Shared IP Address Infrastructure:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0; list-style-type: none;">
+                                                    {% for item in point.evidence_data.details %}
+                                                        <li style="margin-bottom: 8px;">
+                                                            <span style="font-family: monospace; background: #27272a; padding: 2px 4px; border-radius: 3px; font-weight: bold; color: #fff;">{{ item.ip }}</span>
+                                                            <a class="ws-link" href="{{ item.ip_link }}" style="font-size: 11px; margin-left: 8px;">View IP Relations</a>
+                                                            <div style="margin-top: 4px; padding-left: 10px; border-left: 2px solid #444; color: #aaa; font-size: 12px;">
+                                                                Associated Phone Numbers:
+                                                                {% for ph in item.phones %}
+                                                                    <a class="ws-link" href="{{ ph.link }}" style="margin-right: 8px;">{{ ph.value }}</a>
+                                                                {% endfor %}
+                                                            </div>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% elif point.evidence_type == 'switching' %}
+                                            <div>
+                                                <strong style="color: #f59e0b;">Rapid Infrastructure Switches:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                                                    {% for item in point.evidence_data.switching %}
+                                                        <li>Phone <a class="ws-link" href="{{ item.phone_link }}">{{ item.phone }}</a> accessed <strong>{{ item.ip_count }}</strong> distinct IPs in a 60-minute window.</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% elif point.evidence_type == 'timeline' %}
+                                            <div>
+                                                <strong style="color: #34d399;">Temporal Intersect &amp; Overlap Events:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0; list-style-type: none;">
+                                                    {% for item in point.evidence_data.timeline %}
+                                                        <li style="margin-bottom: 8px; padding-left: 10px; border-left: 2px solid #10b981;">
+                                                            IP: <strong style="font-family: monospace; color: #fff;">{{ item.ip }}</strong><br>
+                                                            Phone A: <a class="ws-link" href="{{ item.phone_a_link }}">{{ item.phone_a }}</a> ↔ 
+                                                            Phone B: <a class="ws-link" href="{{ item.phone_b_link }}">{{ item.phone_b }}</a><br>
+                                                            Time Gap: <strong>{{ item.minutes }} mins</strong> ({{ item.confidence }} proximity)
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                                <div style="margin-top: 8px;">
+                                                    <a class="ws-link" href="/timeline_reconstruction?case_id={{ case[1] }}" style="font-weight: bold;">View Interactive Case Timeline</a>
+                                                </div>
+                                            </div>
+                                        {% elif point.evidence_type == 'confidence' %}
+                                            <div>
+                                                <strong style="color: #60a5fa;">Relationship Confidence Metrics:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0; list-style-type: none;">
+                                                    {% for item in point.evidence_data.confidence %}
+                                                        <li style="margin-bottom: 8px; padding-left: 10px; border-left: 2px solid #3b82f6;">
+                                                            IP: <strong style="font-family: monospace; color: #fff;">{{ item.ip }}</strong> ({{ item.confidence }})<br>
+                                                            Fanout: <strong>{{ item.fanout }} phone(s)</strong> | Min Time Gap: <strong>{{ item.minutes }} mins</strong>
+                                                        </li>
+                                                    {% endfor %}
+                                                </ul>
+                                                <div style="margin-top: 8px;">
+                                                    <a class="ws-link" href="/confidence_analysis" style="font-weight: bold;">View Confidence Analysis Console</a>
+                                                </div>
+                                            </div>
+                                        {% elif point.evidence_type == 'risk' %}
+                                            <div>
+                                                <strong style="color: #ef4444;">Active Risk Indicators:</strong>
+                                                <ul style="margin: 4px 0 0 15px; padding: 0;">
+                                                    {% for reason in point.evidence_data.reasons %}
+                                                        <li>{{ reason }}</li>
+                                                    {% endfor %}
+                                                </ul>
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </details>
+                            </li>
+                            {% else %}
+                            <li class="static-reasoning">{{ point.text if point.text is defined else point }}</li>
+                            {% endif %}
+                        {% endfor %}
+                    </ul>
+                    {% else %}
+                    <p class="ws-msg" style="margin: 0;">No correlation signals detected for reasoning.</p>
+                    {% endif %}
+                    
+                    <details style="margin-top: 15px; border: 1px solid #333; padding: 10px; border-radius: 4px; background: rgba(0, 0, 0, 0.2);">
+                        <summary style="cursor: pointer; font-weight: bold; color: #60a5fa; font-size: 13px; outline: none; display: flex; align-items: center; justify-content: space-between;">
+                            <span>View Ranked Threat Scenarios &amp; Alternative Hypotheses</span>
+                            <span>▼</span>
+                        </summary>
+                        <div style="margin-top: 10px; font-size: 12px; color: #ccc;">
+                            {% for hyp in workspace.hypothesis.ranked_hypotheses %}
+                            <div style="margin-bottom: 12px; padding: 8px; border-radius: 4px; background: rgba(255, 255, 255, 0.02); border-left: 3px solid {% if hyp.name == workspace.hypothesis.likely_scenario %}#10b981{% else %}#4b5563{% endif %};">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                                    <strong style="color: #fff; font-size: 13px;">{{ hyp.name }} {% if hyp.name == workspace.hypothesis.likely_scenario %}(Primary){% endif %}</strong>
+                                    <span class="badge" style="background: rgba(96, 165, 250, 0.1); color: #60a5fa; border: 1px solid rgba(96, 165, 250, 0.2); padding: 1px 4px; border-radius: 3px; font-size: 10px;">Score: {{ hyp.score }}</span>
+                                </div>
+                                
+                                <p style="color: #a1a1aa; margin: 2px 0;">Reasoning: {{ hyp.reason_ranked_above_alternatives }}</p>
+                                
+                                {% if hyp.supporting_evidence %}
+                                <div style="margin-top: 4px;">
+                                    <strong style="color: #34d399; font-size: 11px;">Supporting Evidence:</strong>
+                                    <ul style="margin: 2px 0 0 12px; padding: 0; color: #ccc; list-style-type: disc;">
+                                        {% for item in hyp.supporting_evidence %}
+                                        <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                                
+                                {% if hyp.contradicting_evidence %}
+                                <div style="margin-top: 4px;">
+                                    <strong style="color: #f87171; font-size: 11px;">Contradicting Evidence:</strong>
+                                    <ul style="margin: 2px 0 0 12px; padding: 0; color: #fca5a5; list-style-type: disc;">
+                                        {% for item in hyp.contradicting_evidence %}
+                                        <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                                
+                                {% if hyp.missing_evidence %}
+                                <div style="margin-top: 4px;">
+                                    <strong style="color: #fbbf24; font-size: 11px;">Evidence Gaps / Missing:</strong>
+                                    <ul style="margin: 2px 0 0 12px; padding: 0; color: #fde047; list-style-type: disc;">
+                                        {% for item in hyp.missing_evidence %}
+                                        <li>{{ item }}</li>
+                                        {% endfor %}
+                                    </ul>
+                                </div>
+                                {% endif %}
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </details>
+                </div>
+                <div style="border-left: 1px solid #333; padding-left: 20px;">
+                    <div style="margin-bottom: 12px;">
+                        <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Likely Scenario</h4>
+                        <strong style="color: #fff; font-size: 14px;">{{ workspace.hypothesis.likely_scenario }}</strong>
+                    </div>
+
+                    <div style="margin-bottom: 12px;">
+                        <h4 style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">Confidence Level</h4>
+                        <span class="ws-hint level-{{ workspace.hypothesis.confidence_level|lower }}" style="display: inline-block; padding: 2px 6px; font-weight: bold; border-radius: 3px; font-size: 11px;">
+                            {{ workspace.hypothesis.confidence_level }}
+                        </span>
+                    </div>
+
+                    <div>
+                        <h4 style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Next Investigation Actions</h4>
+                        {% if workspace.hypothesis.next_actions %}
+                        <ol style="padding-left: 15px; margin: 0; color: #ccc; line-height: 1.4;">
+                            {% for action in workspace.hypothesis.next_actions %}
+                            <li style="margin-bottom: 4px;">{{ action }}</li>
+                            {% endfor %}
+                        </ol>
+                        {% else %}
+                        <p class="ws-msg" style="margin: 0;">No recommendations available.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- INVESTIGATION BLIND SPOT DETECTOR -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Investigation Blind Spot Detector</span>
+            <span class="ws-hint">Evidence Gap Assessment</span>
+        </summary>
+        <div class="ws-card-body">
+            <div style="display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 20px;">
+                <div>
+                    <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Investigation Completeness</h4>
+                    <div style="display: flex; align-items: baseline; gap: 12px; margin-bottom: 12px;">
+                        <span style="font-size: 28px; font-weight: bold; color: #10b981;">{{ workspace.blindspot.completeness_score }}%</span>
+                        <span style="font-size: 12px; color: #a1a1aa;">Evidence Categories Present: <strong>{{ workspace.blindspot.present_count }} / {{ workspace.blindspot.total_categories }}</strong></span>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Available Evidence</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #a1a1aa;">
+                            {% for cat in workspace.blindspot.present_categories %}
+                            <span style="background: rgba(16, 185, 129, 0.05); color: #34d399; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(16, 185, 129, 0.15); font-weight: 500;">✓ {{ cat }}</span>
+                            {% endfor %}
+                        </div>
+                    </div>
+
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Missing Evidence</h4>
+                        {% if workspace.blindspot.missing_categories %}
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px; color: #fca5a5;">
+                            {% for cat in workspace.blindspot.missing_categories %}
+                            <span style="background: rgba(239, 68, 68, 0.05); color: #f87171; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500;">✗ {{ cat }}</span>
+                            {% endfor %}
+                        </div>
+                        {% else %}
+                        <p class="ws-msg" style="margin: 0; color: #34d399; font-size: 12px;">No missing evidence categories.</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 6px;">Investigation Workflow</h4>
+                        <div style="display: flex; flex-wrap: wrap; gap: 8px; font-size: 12px;">
+                            {% if workspace.blindspot.workflow.notes_present %}
+                            <span style="background: rgba(16, 185, 129, 0.05); color: #34d399; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(16, 185, 129, 0.15); font-weight: 500;">✓ Notes: Logged</span>
+                            {% else %}
+                            <span style="background: rgba(239, 68, 68, 0.05); color: #f87171; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500;">✗ Notes: Unrecorded</span>
+                            {% endif %}
+
+                            {% if workspace.blindspot.workflow.tasks_present %}
+                            <span style="background: rgba(16, 185, 129, 0.05); color: #34d399; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(16, 185, 129, 0.15); font-weight: 500;">✓ Tasks: Active</span>
+                            {% else %}
+                            <span style="background: rgba(239, 68, 68, 0.05); color: #f87171; padding: 2px 6px; border-radius: 3px; border: 1px solid rgba(239, 68, 68, 0.15); font-weight: 500;">✗ Tasks: No tasks assigned</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div style="border-left: 1px solid #333; padding-left: 20px;">
+                    {% if workspace.blindspot.why_it_matters %}
+                    <div style="margin-bottom: 15px;">
+                        <h4 style="margin-top: 0; color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Why It Matters</h4>
+                        <ul class="action-list" style="margin: 0; padding: 0; font-size: 13px; color: #ccc;">
+                            {% for item in workspace.blindspot.why_it_matters %}
+                            <li style="margin-bottom: 6px; line-height: 1.4; list-style-type: none; border-left: 2px solid #ef4444; padding-left: 8px;">
+                                <strong style="color: #f87171;">{{ item.category }}:</strong> {{ item.explanation }}
+                            </li>
+                            {% endfor %}
+                        </ul>
+                    </div>
+                    {% endif %}
+
+                    <div>
+                        <h4 style="color: #888; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 8px;">Highest Priority Next Steps</h4>
+                        {% if workspace.blindspot.priority_steps %}
+                        <ol style="padding-left: 15px; margin: 0; color: #fff; line-height: 1.4; font-size: 13px;">
+                            {% for step in workspace.blindspot.priority_steps %}
+                            <li style="margin-bottom: 8px;">
+                                <strong style="color: #38bdf8;">{{ step.step }}</strong>
+                                <div style="font-size: 12px; color: #a1a1aa; margin-top: 2px;">Reason: {{ step.reason }}</div>
+                            </li>
+                            {% endfor %}
+                        </ol>
+                        {% else %}
+                        <p class="ws-msg" style="margin: 0; color: #34d399;">No pending recommendations. All checks complete.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </details>
+
+    <!-- CASE SUMMARY -->
+    {% if False %}
+    <details class="ws-card" open>
+        <summary><span>Case Summary</span></summary>
+        <div class="ws-card-body">
+            <dl class="ws-kv">
+                <dt>Case ID</dt><dd>{{ case[1] }}</dd>
+                <dt>Name</dt><dd>{{ case[2] }}</dd>
+                <dt>Type</dt><dd>{{ case[3] }}</dd>
+                <dt>Investigator</dt><dd>{{ case[4] }}</dd>
+                <dt>Status</dt><dd>{{ case[5] }}</dd>
+                <dt>Created</dt><dd>{{ case[6] }}</dd>
+            </dl>
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- COMPLAINT SUMMARY -->
+    <details class="ws-card" open>
+        <summary>
+            <span>Complaint Summary</span>
+            <span class="ws-hint">{{ report.complaint_count }} record(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The case comprises {{ report.complaint_count }} linked complaint record(s) filed by victims. These records document key identity coordinates and victim reports, establishing the entry vector for indicators of fraud.
+            </div>
+            {% if report.complaints %}
+            <table>
+                <tr><th>Complainant</th><th>Phone</th><th>Date</th></tr>
+                {% for c in report.complaints %}
+                <tr>
+                    <td>{{ c[1] }}</td>
+                    <td>{{ c[2] }}</td>
+                    <td>{{ c[8] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No citizen complaint logs have been linked to this case file.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>complaints</code> table was queried for matches on <code>case_id = "{{ case[1] }}"</code>.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No complaints have been officially submitted or associated with this investigation's identifier.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- RISK SCORE -->
+    <details class="ws-card" open>
+        <summary>
+            <span>Risk Score</span>
+            <span class="ws-hint level-{{ report.risk_level|lower }}">{{ report.risk_level }}</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The case risk level is assessed as {{ report.risk_level }} based on indicators, IPDR records, and cross-case linkages. A total risk score of {{ report.risk_score }} points was calculated using deterministic criteria.
+            </div>
+            {% if report.risk_reasons %}
+            <ul class="action-list">
+                {% for reason in report.risk_reasons %}
+                <li>{{ reason }}</li>
+                {% endfor %}
+            </ul>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No elevated risk reasons have been triggered for this investigation.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Threat indicators, indicators of compromise, and sharing patterns were matched against risk criteria.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> All threat indicators and IPDR records fall below the elevated risk score thresholds (score is {{ report.risk_score }} pts).</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- PRIORITY -->
+    <details class="ws-card" open>
+        <summary>
+            <span>Priority</span>
+            <span class="ws-hint level-{{ workspace.priority_level|lower }}">{{ workspace.priority_level }}</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The priority level is classified as {{ workspace.priority_level }} ({{ workspace.priority_points }} points) based on signals like case sharing, network switching, and alert volumes. This rating ensures optimal queue routing.
+            </div>
+            <dl class="ws-kv">
+                <dt>Priority Score</dt><dd>{{ workspace.priority_points }} points</dd>
+                <dt>Linked Cases</dt><dd>{{ workspace.linked_cases|length }}</dd>
+                <dt>Complaints</dt><dd>{{ report.complaint_count }}</dd>
+                <dt>Rapid Switching</dt><dd>{{ report.rapid_switching|length }} event(s)</dd>
+                <dt>Risk Level</dt><dd>{{ report.risk_level }}</dd>
+            </dl>
+        </div>
+    </details>
+
+    <!-- CONFIDENCE (async; also fills header metric) -->
+    <details class="ws-card ws-async" id="ws-confidence-card"
+             data-endpoint="/workspace/{{ case[1] }}/api/confidence"
+             data-render="wsRenderConfidence">
+        <summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; outline: none; user-select: none;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span>Confidence Analysis</span>
+                <span class="ws-hint">shared infrastructure</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px; font-size: 11px;">
+                <label style="cursor: pointer; display: flex; align-items: center; gap: 4px; font-weight: normal; margin: 0; color: #a1a1aa; padding: 2px 6px; background: #27272a; border-radius: 3px; border: 1px solid #3f3f46;">
+                    <input type="checkbox" id="cross-case-toggle" style="cursor: pointer; margin: 0;"> Enable Cross-Case Intelligence
+                </label>
+            </div>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-async-body"><p class="ws-msg">Loading…</p></div>
+        </div>
+    </details>
+
+    <!-- INVESTIGATION FLAGS -->
+    <details class="ws-card" open>
+        <summary><span>Investigation Flags</span></summary>
+        <div class="ws-card-body">
+            <div class="flag-list">
+                <span class="{{ 'flag-on' if workspace.shared_phone else 'flag-off' }}">
+                    Shared Phone: {{ 'Yes' if workspace.shared_phone else 'No' }}
+                </span>
+                <span class="{{ 'flag-on' if workspace.shared_upi else 'flag-off' }}">
+                    Shared UPI: {{ 'Yes' if workspace.shared_upi else 'No' }}
+                </span>
+                <span class="{{ 'flag-on' if workspace.shared_ip else 'flag-off' }}">
+                    Shared Infrastructure: {{ 'Yes' if workspace.shared_ip else 'No' }}
+                </span>
+                <span class="{{ 'flag-on' if report.rapid_switching else 'flag-off' }}">
+                    Rapid Switching: {{ 'Yes' if report.rapid_switching else 'No' }}
+                </span>
+            </div>
+        </div>
+    </details>
+
+    <!-- LINKED CASES -->
+    <details class="ws-card">
+        <summary>
+            <span>Linked Cases</span>
+            <span class="ws-hint">{{ workspace.linked_cases|length }}</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Linkage discovery identified {{ workspace.linked_cases|length }} connected case(s) sharing identical intelligence entities. These intersections expose common phone lines, financial accounts, or infrastructure indicating coordinated syndicate activity.
+            </div>
+            {% if workspace.linked_cases %}
+            <table>
+                <tr><th>Case</th><th>Shared Type</th><th>Shared Value</th></tr>
+                {% for link in workspace.linked_cases %}
+                <tr>
+                    <td><a class="ws-link" href="/workspace/{{ link[0] }}">{{ link[0] }}</a></td>
+                    <td>{{ link[1] }}</td>
+                    <td>{{ link[2] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No external investigations share indicators with this case file.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Shared indicators (Phone, UPI, Email, IP, Telegram, Website) in the <code>entities</code> registry.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> All extracted indicator values are completely unique to this file, indicating no overlap with other cases in the system.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- CASE SIMILARITY -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Case Similarity</span>
+            <span class="ws-hint">{{ workspace.similarity.results|length }} match(es)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Case similarity algorithms processed case metadata and indicators, identifying {{ workspace.similarity.results|length }} match(es). Top match achieves a score of {{ workspace.similarity.top_score }}% based on indicator and metadata similarity weights.
+            </div>
+            <p class="ws-sub">{{ workspace.similarity.summary }}</p>
+            {% if workspace.similarity.results %}
+            <table>
+                <tr><th>Case</th><th>Score</th><th>Why it matches</th></tr>
+                {% for match in workspace.similarity.results[:5] %}
+                <tr>
+                    <td>
+                        <a class="ws-link" href="/workspace/{{ match.case2.case_id }}">{{ match.case2.case_id }}</a>
+                        <br><span class="ws-sub">{{ match.case2.case_name }}</span>
+                    </td>
+                    <td>
+                        <strong>{{ match.strength }}</strong>
+                        <br><span class="ws-sub">{{ match.shared_count }} shared signal(s)</span>
+                    </td>
+                    <td>
+                        {% for reason in match.explanation %}
+                            {{ reason }}{% if not loop.last %}<br>{% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            <p><a class="ws-link" href="/case_similarity?case_id={{ case[1] }}">Open full similarity analysis →</a></p>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No similar cases meet the similarity score calculation threshold.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Indicator weights (Phone: 18, UPI: 22, IP: 26, etc.) and metadata proximity across other files.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No other cases in the database share overlapping indicator values or case profile attributes with this case.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- MODUS OPERANDI DETECTION -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Modus Operandi Detection</span>
+            <span class="ws-hint">Detected: {{ workspace.modus_operandi.detected_mo }} ({{ workspace.modus_operandi.confidence }}% confidence)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The modus operandi classification system analyzed case reports and notes, identifying the primary signature pattern as <strong>{{ workspace.modus_operandi.detected_mo }}</strong> with a classification confidence of {{ workspace.modus_operandi.confidence }}%.
+            </div>
+            <p class="ws-sub"><b>Classification:</b> {{ workspace.modus_operandi.detected_mo }}</p>
+            <p class="ws-sub"><b>Description:</b> {{ workspace.modus_operandi.description }}</p>
+            
+            {% if workspace.modus_operandi.signatures %}
+            <div style="margin-top:12px; margin-bottom:12px;">
+                <b>Triggered M.O. Signatures:</b>
+                <ul style="margin: 6px 0; padding-left: 20px; color: #94a3b8; font-size: 14px;">
+                    {% for sig in workspace.modus_operandi.signatures %}
+                    <li>{{ sig }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            {% if workspace.modus_operandi.recommendations %}
+            <div style="margin-top:12px; margin-bottom:12px;">
+                <b>M.O. Target Recommendations:</b>
+                <ul style="margin: 6px 0; padding-left: 20px; color: #94a3b8; font-size: 14px;">
+                    {% for rec in workspace.modus_operandi.recommendations %}
+                    <li>{{ rec }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% endif %}
+
+            <p><a class="ws-link" href="/modus_operandi?case_id={{ case[1] }}">Open full Modus Operandi analysis →</a></p>
+        </div>
+    </details>
+
+    <!-- RELEVANT SOPS & INVESTIGATION GUIDES -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Relevant SOPs & Action Workflows</span>
+            <span class="ws-hint">{{ workspace.relevant_sops|length }} matching SOPs/guides</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Standard Operating Procedures matched {{ workspace.relevant_sops|length }} matching guide(s) based on the case type and classification profile. Use these step-by-step instructions to compile court-defensible filings and evidence.
+            </div>
+            {% if workspace.relevant_sops %}
+                {% for sop in workspace.relevant_sops %}
+                <div style="border-bottom: {% if not loop.last %}1px solid #334155{% else %}none{% endif %}; padding-bottom: 12px; margin-bottom: 12px;">
+                    <h3 style="color: #60a5fa; margin: 0 0 5px 0; font-size: 15px;">{{ sop.title }}</h3>
+                    <p style="color: #94a3b8; font-size: 13px; margin: 0 0 10px 0;">{{ sop.description }}</p>
+                    
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 20px;">
+                        <div>
+                            <span style="font-size: 12px; color: #cbd5e1; font-weight: bold;">Action Steps:</span>
+                            <ol style="margin: 5px 0 0 0; padding-left: 20px; color: #94a3b8; font-size: 13px; line-height: 1.5;">
+                                {% for step in sop.steps %}
+                                <li>{{ step }}</li>
+                                {% endfor %}
+                            </ol>
+                        </div>
+                        <div>
+                            {% if sop.legal_provisions %}
+                            <span style="font-size: 11px; color: #f43f5e; font-weight: bold; display: block;">Legal Provisions:</span>
+                            <ul style="margin: 3px 0 8px 0; padding-left: 15px; color: #94a3b8; font-size: 12px; line-height: 1.4;">
+                                {% for prov in sop.legal_provisions %}
+                                <li>{{ prov }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+
+                            {% if sop.resources %}
+                            <span style="font-size: 11px; color: #10b981; font-weight: bold; display: block;">Guides & Resources:</span>
+                            <ul style="margin: 3px 0 0 0; padding-left: 15px; color: #94a3b8; font-size: 12px; line-height: 1.4;">
+                                {% for res in sop.resources %}
+                                <li>{{ res }}</li>
+                                {% endfor %}
+                            </ul>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <p style="margin-top: 10px;"><a class="ws-link" href="/sop">Open Knowledge Base & SOP Center →</a></p>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No case-specific SOPs matched the current classification attributes.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> SOP rules matched on Case Type (<code>{{ report.case[3] if report.case else 'None' }}</code>) and MO (<code>{{ workspace.modus_operandi.detected_mo }}</code>).</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> The case type or Modus Operandi are unclassified, or the matched profiles do not map to active SOP rules. You can browse all standard workflows in the SOP Center.</p>
+            </div>
+            <p><a class="ws-link" href="/sop">Browse Knowledge Base & SOP Center →</a></p>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- LINKED INTELLIGENCE -->
+    {% if False %}
+    <details class="ws-card">
+        <summary>
+            <span>Linked Intelligence</span>
+            <span class="ws-hint">{{ report.entity_count }} indicator(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Extracted indicators map {{ report.entity_count }} unique identity coordinates. These structural nodes represent Phone numbers, UPI IDs, Email addresses, and other identifiers linked to case reports.
+            </div>
+            {% if workspace.entity_type_counts %}
+            <dl class="ws-kv">
+                {% for etype, count in workspace.entity_type_counts.items() %}
+                <dt>{{ etype }}</dt><dd>{{ count }}</dd>
+                {% endfor %}
+            </dl>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No intelligence indicators are recorded for this case.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Indicator types counts inside the entities table.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No entity extraction has been processed or complaints linked to populate indicators.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- ENTITY SUMMARY -->
+    <details class="ws-card">
+        <summary>
+            <span>Entity Summary</span>
+            <span class="ws-hint">top {{ workspace.entity_profiles|length }}</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Entity summary profile displays details for top indicators. For each node, it details the indicator type, the coordinate value, and the volume of other investigations sharing that node.
+            </div>
+            {% if workspace.entity_profiles %}
+            <table>
+                <tr><th>Type</th><th>Value</th><th>Other Cases</th></tr>
+                {% for entity in workspace.entity_profiles %}
+                <tr>
+                    <td>{{ entity[0] }}</td>
+                    <td>{{ entity[1] }}</td>
+                    <td>{{ entity[2] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No entity profiles exist for this case.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>entities</code> table for `case_id` matches.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> Either no indicators have been promoted, or the pipeline extract stage has not run for this file.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- IPDR SUMMARY -->
+    {% if False %}
+    <details class="ws-card">
+        <summary>
+            <span>IPDR Summary</span>
+            <span class="ws-hint">{{ workspace.unique_ip_count }} unique IP(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> IPDR infrastructure logs record telecom network accesses, mapping {{ report.ipdr_count }} hit(s) across {{ workspace.unique_ip_count }} unique IP address(es). This data details access frequency and associated suspect devices.
+            </div>
+            <dl class="ws-kv">
+                <dt>Total Records</dt><dd>{{ report.ipdr_count }}</dd>
+                <dt>Unique IPs</dt><dd>{{ workspace.unique_ip_count }}</dd>
+            </dl>
+            {% if workspace.infrastructure %}
+            <table>
+                <tr><th>IP Address</th><th>Hits</th><th>Phones</th></tr>
+                {% for item in workspace.infrastructure %}
+                <tr>
+                    <td>{{ item[0] }}</td>
+                    <td>{{ item[1] }}</td>
+                    <td>{{ item[2] }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No telecom IPDR logs are linked to this case.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>ipdr_records</code> table for `case_id` matches.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> Suspect network access/IP logs have not been uploaded or processed for this investigation.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- TIMELINE PREVIEW (async) -->
+    <details class="ws-card ws-async span-2"
+             data-endpoint="/workspace/{{ case[1] }}/api/timeline_preview"
+             data-render="wsRenderTimeline">
+        <summary>
+            <span>Timeline Preview</span>
+            <span class="ws-hint">click to load</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-async-body"><p class="ws-msg">Expand to load timeline…</p></div>
+        </div>
+    </details>
+
+    <!-- GRAPH PREVIEW (async, lightweight SVG) -->
+    <details class="ws-card ws-async span-2"
+             data-endpoint="/workspace/{{ case[1] }}/api/graph_preview"
+             data-render="wsRenderGraph">
+        <summary>
+            <span>Graph Preview</span>
+            <span class="ws-hint">nearest neighbours · click to load</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-async-body"><p class="ws-msg">Expand to load graph…</p></div>
+        </div>
+    </details>
+
+    <!-- INVESTIGATOR RECOMMENDATIONS -->
+    <details class="ws-card span-2" open>
+        <summary><span>Investigator Recommendations</span></summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Next-step recommendations generated {{ workspace.recommendations|length }} recommended action(s) based on analysis signals. These steps target critical evidence collection, gateway logs, and account freeze actions.
+            </div>
+            {% if workspace.recommendations %}
+            <ol class="action-list">
+                {% for recommendation in workspace.recommendations %}
+                <li>{{ recommendation }}</li>
+                {% endfor %}
+            </ol>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No investigator recommendations have been generated for this case.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Indicator gaps, missing evidence logs, and timeline patterns.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> All standard investigations steps are completed, or the system lacks sufficient input data to generate next steps.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- INTELLIGENCE ALERTS -->
+    <details class="ws-card span-2" open>
+        <summary>
+            <span>Intelligence Alerts</span>
+            <span class="ws-hint">{{ workspace.alerts.total }} active</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Security rules generated {{ workspace.alerts.total }} active intelligence alert(s) for the case. These alerts identify indicator reuse, cross-case sharing, or infrastructure switches requiring investigator intervention.
+            </div>
+            {% if workspace.alerts.alerts %}
+            <table>
+                <tr><th>Severity</th><th>Alert</th><th>Action</th><th>Linked Cases</th></tr>
+                {% for alert in workspace.alerts.alerts %}
+                <tr>
+                    <td><span class="badge level-{{ alert.severity|lower }}">{{ alert.severity }}</span></td>
+                    <td><strong>{{ alert.type }}</strong><br><span class="ws-sub">{{ alert.message }}</span></td>
+                    <td>{{ alert.action }}</td>
+                    <td>
+                        {% if alert.linked_cases %}
+                            {% for linked in alert.linked_cases %}
+                                <a class="ws-link" href="/workspace/{{ linked }}">{{ linked }}</a>{% if not loop.last %}, {% endif %}
+                            {% endfor %}
+                        {% else %}
+                            &mdash;
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No active intelligence alerts are triggered.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Rules on indicator reuse, rapid switches, and evidence gaps.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> The case indicators and metadata do not violate any risk parameters or cross-case sharing thresholds.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- RECENT ACTIVITY (async) -->
+    {% if False %}
+    <details class="ws-card ws-async"
+             data-endpoint="/workspace/{{ case[1] }}/api/activity"
+             data-render="wsRenderActivity">
+        <summary>
+            <span>Recent Activity</span>
+            <span class="ws-hint">click to load</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-async-body"><p class="ws-msg">Expand to load activity…</p></div>
+        </div>
+    </details>
+    {% endif %}
+
+    <!-- FINANCIAL SUMMARY -->
+    <details class="ws-card">
+        <summary>
+            <span>Financial Summary</span>
+            <span class="ws-hint">{{ workspace.financial.unique_instrument_count }} indicator(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> Financial analysis parsed case records, identifying {{ workspace.financial.unique_instrument_count }} unique instrument(s). It tracks reusing bank accounts, UPI beneficiary IDs, and IFSC branches across cases.
+            </div>
+            <p class="ws-sub">{{ workspace.financial.summary }}</p>
+
+            {% if workspace.financial.risk_flags %}
+            <ul class="action-list">
+                {% for flag in workspace.financial.risk_flags %}
+                <li>{{ flag }}</li>
+                {% endfor %}
+            </ul>
+            {% endif %}
+
+            {% if workspace.financial.reused %}
+            <h4>Reused Financial Indicators</h4>
+            <table>
+                <tr><th>Indicator</th><th>Other Cases</th></tr>
+                {% for item in workspace.financial.reused %}
+                <tr>
+                    <td>{{ item.value }}</td>
+                    <td>
+                        {% for linked in item.linked_cases %}
+                            <a class="ws-link" href="/workspace/{{ linked }}">{{ linked }}</a>{% if not loop.last %}, {% endif %}
+                        {% endfor %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% elif workspace.financial.instruments %}
+            <h4>Detected Instruments</h4>
+            <table>
+                <tr><th>Type</th><th>Value</th><th>Source</th></tr>
+                {% for item in workspace.financial.instruments %}
+                <tr>
+                    <td>{{ item.kind }}</td>
+                    <td>{{ item.value }}</td>
+                    <td>{{ item.source }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No transaction records or beneficiary instruments have been linked.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Financial entities (UPI IDs, bank accounts) in complaints and notes for <code>case_id = "{{ case[1] }}"</code>.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No financial indicators are recorded in complaints or entities for this investigation.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- EVIDENCE SUMMARY + UPLOAD (existing functionality preserved) -->
+    <details class="ws-card span-2" id="evidence-section">
+        <summary>
+            <span>Evidence &amp; Chain of Custody</span>
+            <span class="ws-hint">{{ workspace.evidence_items|length }} item(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The evidence repository contains {{ workspace.evidence_items|length }} stored file(s). All records undergo SHA-256 cryptographic verification and audit-logged custody transitions to guarantee legal chain-of-custody integrity.
+            </div>
+            <form action="/workspace/{{ case[1] }}/evidence" method="POST" enctype="multipart/form-data">
+                <input type="text" name="uploaded_by" placeholder="Uploaded by">
+                <input type="text" name="description" placeholder="Description">
+                <input type="file" name="evidence_file" required>
+                <button type="submit">Upload Evidence</button>
+            </form>
+
+            {% if workspace.evidence_items %}
+            <table>
+                <tr>
+                    <th>ID</th><th>File</th><th>Description</th>
+                    <th>SHA256</th><th>Status</th><th>Actions</th>
+                </tr>
+                {% for item in workspace.evidence_items %}
+                <tr id="ev-row-{{ item[1] }}">
+                    <td>{{ item[1] }}</td>
+                    <td>
+                        {{ item[3] }}
+                        {% if item[10] is defined and item[10] %}
+                        <details style="margin-top: 4px; font-size: 11px; color: #a1a1aa; border: 1px solid #333; padding: 4px; border-radius: 3px; background: rgba(0,0,0,0.15); max-width: 300px;">
+                            <summary style="cursor: pointer; color: #60a5fa; font-weight: bold; outline: none; user-select: none;">Show Provenance &amp; Quality</summary>
+                            <div style="margin-top: 4px; line-height: 1.3;">
+                                <div>Classification: <strong style="color: #fff;">{{ item[10].classification }}</strong></div>
+                                <div>Origin Module: <span style="color: #fff;">{{ item[10].origin_module }}</span></div>
+                                <div>Record ID: <span style="font-family: monospace; color: #fff;">{{ item[10].record_identifier }}</span></div>
+                                <div>Timestamp: <span style="color: #fff;">{{ item[10].timestamp }}</span></div>
+                                <div>Fields involved: <span style="color: #fff;">{{ item[10].fields_involved|join(', ') }}</span></div>
+                            </div>
+                        </details>
+                        {% endif %}
+                    </td>
+                    <td>{{ item[5] or '—' }}</td>
+                    <td class="hash-cell">{{ item[8] }}</td>
+                    <td id="ev-status-{{ item[1] }}">{{ item[9] }}</td>
+                    <td class="ev-actions">
+                        <a class="btn btn-sm" href="/workspace/{{ case[1] }}/evidence/{{ item[1] }}/view">View</a>
+                        <a class="btn btn-sm" href="/workspace/{{ case[1] }}/evidence/{{ item[1] }}/download">Download</a>
+                        <button type="button" class="btn btn-sm coc-edit-btn"
+                                data-evid="{{ item[1] }}"
+                                data-caseid="{{ case[1] }}"
+                                data-description="{{ item[5]|e }}"
+                                data-status="{{ item[9] }}">Edit</button>
+                        <button type="button" class="btn btn-sm coc-verify-btn"
+                                data-evid="{{ item[1] }}"
+                                data-caseid="{{ case[1] }}">Verify</button>
+                        <button type="button" class="btn btn-sm coc-audit-btn"
+                                data-evid="{{ item[1] }}"
+                                data-caseid="{{ case[1] }}">Audit</button>
+                        <button type="button" class="btn btn-sm btn-danger coc-delete-btn"
+                                data-evid="{{ item[1] }}"
+                                data-caseid="{{ case[1] }}"
+                                data-filename="{{ item[3] }}">Delete</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No physical or digital evidence files have been registered.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>evidence_items</code> table for matching rows on <code>case_id = "{{ case[1] }}"</code>.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> The investigator has not uploaded screenshots, PDFs, transaction CSVs, or IPDR files yet.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- TASK MANAGEMENT (existing functionality preserved) -->
+    <details class="ws-card span-2" id="tasks-section">
+        <summary>
+            <span>Task Management</span>
+            <span class="ws-hint">{{ workspace.tasks|length }} task(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The task list tracks {{ workspace.tasks|length }} operational item(s) for the case queue. It assigns ownership and due dates to critical operations, ensuring structured case management.
+            </div>
+            <form class="inline-form" action="/workspace/{{ case[1] }}/task" method="POST">
+                <input type="text" name="task" placeholder="Add task, e.g. Obtain KYC" required>
+                <input type="text" name="owner" placeholder="Owner">
+                <input type="date" name="due_date">
+                <button type="submit">Add Task</button>
+            </form>
+
+            {% if workspace.tasks %}
+            <table>
+                <tr><th>Status</th><th>Task</th><th>Owner</th><th>Due</th><th>Action</th></tr>
+                {% for task in workspace.tasks %}
+                <tr>
+                    <td>{{ task[3] }}</td>
+                    <td>{{ task[2] }}</td>
+                    <td>{{ task[4] }}</td>
+                    <td>{{ task[5] }}</td>
+                    <td>
+                        <form action="/workspace/{{ case[1] }}/task/{{ task[0] }}/toggle" method="POST">
+                            <button type="submit">
+                                {% if task[3] == "Open" %}Complete{% else %}Reopen{% endif %}
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No task list has been initialized for this case.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>investigation_tasks</code> registry for <code>case_id = "{{ case[1] }}"</code>.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No manual tasks have been defined by the handler, and no automated SOP checklists have triggered setup tasks.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+    <!-- INVESTIGATION NOTEBOOK (existing functionality preserved) -->
+    <details class="ws-card span-2" id="notes-section">
+        <summary>
+            <span>Investigation Notebook</span>
+            <span class="ws-hint">{{ workspace.notes|length }} note(s)</span>
+        </summary>
+        <div class="ws-card-body">
+            <div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">
+                <strong>Executive Summary:</strong> The investigation notebook logs {{ workspace.notes|length }} running entry/entries compiled by case handlers. These annotations log investigative hypotheses, interviews, database queries, and observations.
+            </div>
+            <form action="/workspace/{{ case[1] }}/note" method="POST">
+                <input type="text" name="officer" placeholder="Officer name">
+                <textarea name="note" placeholder="Add investigation note" required></textarea>
+                <button type="submit">Save Note</button>
+            </form>
+
+            {% if workspace.notes %}
+            <div class="note-list">
+                {% for note in workspace.notes %}
+                <div class="note-item">
+                    <strong>{{ note[3] }}</strong>
+                    <small>{{ note[4] }}</small>
+                    <p>{{ note[2] }}</p>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">
+                <p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No investigator annotations or notes are recorded.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> The <code>investigation_notes</code> table for matches on <code>case_id = "{{ case[1] }}"</code>.</p>
+                <p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No manual notes, findings, annotations, or journal logs have been entered into the case database.</p>
+            </div>
+            {% endif %}
+        </div>
+    </details>
+
+</div>
+
+<script>
+(function () {
+
+    function fmt(v) {
+        return (v === null || v === undefined || v === "") ? "—" : v;
+    }
+
+    function esc(v) {
+        return String(fmt(v))
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;");
+    }
+
+    window.wsRenderConfidence = function (target, data) {
+        var metric = document.getElementById("metric-confidence");
+        if (metric) {
+            metric.textContent = data.overall || "Unknown";
+            metric.className = "level-" + String(data.overall || "unknown").toLowerCase();
+        }
+
+        // Populate the explanation dropdown in the header metric card
+        var explainCard = document.getElementById("metric-confidence-explain-card");
+        var explainContent = document.getElementById("metric-confidence-explain-content");
+        if (explainCard && explainContent) {
+            if (data.assessments && data.assessments.length > 0) {
+                explainCard.style.display = "block";
+                var mainA = data.assessments[0];
+                var h = '<strong>Target IP:</strong> ' + esc(mainA.ip) + '<br>';
+                h += '<strong>Overall Rating:</strong> ' + esc(mainA.confidence) + '<br>';
+                h += '<div style="margin-top: 4px; border-top: 1px solid #444; padding-top: 4px;">';
+
+                // Temporal Proximity
+                var isTempPass = (mainA.dimensions.temporal.score >= 0.2 || mainA.fanout == 1);
+                h += '<strong>1. Temporal Gate:</strong> ' + (isTempPass ? '<span style="color:#34d399">PASS</span>' : '<span style="color:#f87171">FAIL</span>') + '<br>';
+                h += ' • Current: ' + esc(mainA.dimensions.temporal.score) + ' (' + esc(mainA.dimensions.temporal.category) + ')<br>';
+                h += ' • Reason: ' + esc(mainA.dimensions.temporal.explanation) + '<br>';
+
+                // Corroboration
+                var isCorrobPass = (mainA.dimensions.corroboration.score >= 0.3);
+                h += '<strong>2. Corroboration Gate:</strong> ' + (isCorrobPass ? '<span style="color:#34d399">PASS</span>' : '<span style="color:#f87171">FAIL</span>') + '<br>';
+                h += ' • Current: ' + esc(mainA.dimensions.corroboration.score) + ' (' + esc(mainA.dimensions.corroboration.category) + ')<br>';
+                h += ' • Reason: ' + esc(mainA.dimensions.corroboration.explanation) + '<br>';
+
+                // Completeness
+                var isCompletePass = (mainA.dimensions.completeness.score >= 0.3);
+                h += '<strong>3. Completeness Gate:</strong> ' + (isCompletePass ? '<span style="color:#34d399">PASS</span>' : '<span style="color:#f87171">FAIL</span>') + '<br>';
+                h += ' • Current: ' + esc(mainA.dimensions.completeness.score) + ' (' + esc(mainA.dimensions.completeness.category) + ')<br>';
+                h += ' • Reason: ' + esc(mainA.dimensions.completeness.explanation) + '<br>';
+
+                // Contradiction
+                var contrCount = mainA.unresolved_high_contradictions || 0;
+                var isContrPass = (contrCount == 0);
+                h += '<strong>4. Contradiction Gate:</strong> ' + (isContrPass ? '<span style="color:#34d399">PASS</span>' : '<span style="color:#f87171">FAIL</span>') + '<br>';
+                h += ' • Current: ' + contrCount + ' unresolved High severity contradiction(s) affecting this IP.<br>';
+                h += ' • Reason: ' + (isContrPass ? 'No conflicting infrastructure coordinates detected.' : 'Unresolved contradiction locks confidence to Limited.') + '<br>';
+
+                h += '</div>';
+                explainContent.innerHTML = h;
+            } else {
+                explainCard.style.display = "none";
+            }
+        }
+
+        if (!data.assessments || !data.assessments.length) {
+            target.innerHTML = '<div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">' +
+                '<strong>Executive Summary:</strong> Shared-infrastructure confidence analysis has not evaluated any network coordinates for this case due to a lack of telecom records.' +
+                '</div>' +
+                '<div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">' +
+                '<p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No telecom logs are present in this case.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> IPDR logs matching the case identifier.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No internet/IP indicators are registered in this file.</p>' +
+                '</div>';
+            return;
+        }
+
+        var rows = data.assessments.map(function (a) {
+            var dimsHtml = "";
+            if (a.dimensions) {
+                dimsHtml = '<details style="margin-top: 8px; border: 1px solid #333; padding: 6px; border-radius: 3px; background: rgba(0,0,0,0.15);"><summary style="cursor: pointer; font-size: 11px; color: #60a5fa; font-weight: bold; outline: none; display: flex; justify-content: space-between;"><span>Show 8-Dimension Evaluation Breakdown</span><span>▼</span></summary><table style="width: 100%; border-collapse: collapse; margin-top: 6px; font-size: 11px; text-align: left;">' +
+                    '<tr style="border-bottom: 1px solid #222;"><th style="padding: 2px;">Dimension</th><th style="padding: 2px;">Category</th><th style="padding: 2px; text-align: right;">Score</th><th style="padding: 2px; padding-left: 10px;">Reason</th></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Temporal Proximity</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.temporal.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.temporal.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.temporal.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Persistence</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.persistence.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.persistence.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.persistence.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Cross-Source Corroboration</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.corroboration.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.corroboration.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.corroboration.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Cross-Case Recurrence</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.recurrence.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.recurrence.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.recurrence.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Data Completeness</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.completeness.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.completeness.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.completeness.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Independent Indicators</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.indicators.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.indicators.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.indicators.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Entity Uniqueness</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.uniqueness.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.uniqueness.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.uniqueness.explanation) + '</td></tr>' +
+                    '<tr><td style="padding: 2px; color: #a1a1aa;">Infrastructure Significance</td><td style="padding: 2px; color: #fff;">' + esc(a.dimensions.infrastructure.category) + '</td><td style="padding: 2px; text-align: right; color: #fff;">' + esc(a.dimensions.infrastructure.score) + '</td><td style="padding: 2px; padding-left: 10px; color: #a1a1aa;">' + esc(a.dimensions.infrastructure.explanation) + '</td></tr>' +
+                    '</table></details>';
+            }
+
+            var contraHtml = "";
+            if (a.contradictions && a.contradictions.length > 0) {
+                var cItems = a.contradictions.map(function (c) {
+                    return '<li style="margin-bottom: 4px;"><strong style="color: #f87171;">[' + esc(c.severity) + ' Severity] ' + esc(c.type) + '</strong>: ' + esc(c.description) + ' <br><span style="color: #fbbf24; font-size: 10px;">Explanation: ' + esc(c.explanation) + '</span></li>';
+                }).join("");
+                contraHtml = '<details style="margin-top: 8px; border: 1px solid rgba(239, 68, 68, 0.2); padding: 6px; border-radius: 3px; background: rgba(239, 68, 68, 0.05);"><summary style="cursor: pointer; font-size: 11px; color: #fca5a5; font-weight: bold; outline: none; display: flex; justify-content: space-between;"><span>Logical Contradictions Detected (' + a.contradictions.length + ')</span><span>▼</span></summary><ul style="margin: 6px 0 0 12px; padding: 0; font-size: 11px; text-align: left; color: #ccc;">' + cItems + '</ul></details>';
+            }
+
+            return '<div class="ws-conf-item" style="border-bottom: 1px solid #222; padding-bottom: 12px; margin-bottom: 12px;"><div><strong>' + esc(a.ip) +
+                '</strong> <span class="badge level-' + String(a.confidence || "unknown").toLowerCase() +
+                '">' + esc(a.confidence) + '</span></div><p class="ws-sub" style="margin: 4px 0 0 0;">' + esc(a.narrative) + '</p>' + dimsHtml + contraHtml + '</div>';
+        }).join("");
+
+        var execSummaryHtml = '<div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">' +
+            '<strong>Executive Summary:</strong> Shared-infrastructure confidence analysis has assessed ' + esc(data.assessed) + ' of ' +
+            esc(data.total_ips) + ' IP address(es) linked to the case. The highest evaluated evidence confidence rating is <strong>' + esc(data.overall) + '</strong>.' +
+            '</div>';
+
+        target.innerHTML = execSummaryHtml + '<p class="ws-sub">Assessed ' + esc(data.assessed) + ' of ' +
+            esc(data.total_ips) + ' IP address(es).</p>' + rows;
+    };
+
+    window.wsRenderTimeline = function (target, data) {
+        if (!data.events || !data.events.length) {
+            target.innerHTML = '<div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">' +
+                '<strong>Executive Summary:</strong> No timeline events have been compiled for this case yet due to lack of indicators and complaint records.' +
+                '</div>' +
+                '<div class="ws-empty-state" style="padding: 16px; border: 1px dashed #334155; border-radius: 6px; text-align: center; color: #94a3b8; font-size: 13px;">' +
+                '<p style="margin: 0; font-weight: bold; color: #cbd5e1;">No qualifying evidence found.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Reason:</strong> No timeline events could be generated.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>What was searched:</strong> Complaints, entity additions, and network logs timestamps.</p>' +
+                '<p style="margin: 4px 0 0 0; font-size: 12px;"><strong>Why nothing qualified:</strong> No chronological log events are present in the case database.</p>' +
+                '</div>';
+            return;
+        }
+        var totalEvents = data.total;
+        var transitions = 0;
+        var complaints = 0;
+        var activity = 0;
+        data.events.forEach(function (e) {
+            if (e.event_type === "INFRASTRUCTURE_TRANSITION") transitions++;
+            else if (e.event_type === "COMPLAINT") complaints++;
+            else if (e.event_type === "IPDR_ACTIVITY") activity++;
+        });
+
+        var execSummaryHtml = '<div class="ws-exec-summary" style="margin-bottom: 12px; padding: 10px; background: rgba(96, 165, 250, 0.05); border-left: 3px solid #60a5fa; border-radius: 4px; font-size: 13px; line-height: 1.4;">' +
+            '<strong>Executive Summary:</strong> Timeline analysis reconstructed ' + esc(totalEvents) + ' historical event(s) for the case. ' +
+            'This includes ' + esc(activity) + ' suspect IPDR access sessions, ' + esc(transitions) + ' geographic transition(s), and ' + esc(complaints) + ' victim complaints, mapping the threat workflow.' +
+            '</div>';
+
+        var rows = data.events.map(function (e) {
+            return '<div class="ws-tl-item"><span class="ws-tl-time">' + esc(e.timestamp) +
+                '</span><span class="ws-tl-title">' + esc(e.title) + '</span>' +
+                '<span class="ws-tl-detail">' + esc(e.details) + '</span></div>';
+        }).join("");
+
+        target.innerHTML = execSummaryHtml + '<p class="ws-sub">Showing ' + esc(data.shown) + ' of ' +
+            esc(data.total) + ' events (most recent first).</p>' + rows +
+            '<a class="ws-link" href="/timeline_reconstruction">Open full timeline →</a>';
+    };
+
+    window.wsRenderGraph = function (target, data) {
+        var nodes = data.nodes || [];
+        if (nodes.length <= 1) {
+            target.innerHTML = '<p class="ws-msg">Not enough linked data to render a graph.</p>';
+            return;
+        }
+        var W = 640, H = 380, cx = W / 2, cy = H / 2;
+        var others = nodes.slice(1);
+        var R = Math.min(W, H) / 2 - 60;
+        var pos = {};
+        pos[nodes[0].id] = { x: cx, y: cy };
+        others.forEach(function (n, i) {
+            var ang = (2 * Math.PI * i) / others.length;
+            pos[n.id] = { x: cx + R * Math.cos(ang), y: cy + R * Math.sin(ang) };
+        });
+        
+        var view = { k: 1, tx: 0, ty: 0 };
+        var dragNodeId = null;
+        var dragOffset = { x: 0, y: 0 };
+        var panState = { dragging: false, sx: 0, sy: 0, moved: false };
+
+        var note = data.hidden > 0
+            ? '<p class="ws-sub">' + esc(data.hidden) +
+              ' additional entit(ies) hidden. Showing nearest neighbours only.</p>'
+            : "";
+
+        target.innerHTML = '<div style="position: relative;">' +
+            '<button class="btn btn-ws-fs" style="position: absolute; top: 10px; right: 80px; z-index: 10; font-size: 9px; padding: 2px 6px; background: #475569; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;">Fullscreen</button>' +
+            '<button class="btn btn-ws-png" style="position: absolute; top: 10px; right: 10px; z-index: 10; font-size: 9px; padding: 2px 6px; background: #10b981; border: none; border-radius: 4px; color: white; cursor: pointer; font-weight: bold;">Export PNG</button>' +
+            '<svg viewBox="0 0 ' + W + ' ' + H + '" class="ws-graph-svg" style="background:#0f172a; border-radius:6px; cursor:grab; width: 100%; height: auto;"></svg>' +
+            '</div>' + note +
+            '<a class="ws-link" href="/link_analysis">Open full graph analysis →</a>';
+
+        var svg = target.querySelector(".ws-graph-svg");
+
+        function drawSvg() {
+            var parts = [];
+            (data.edges || []).forEach(function (e) {
+                var a = pos[e.source], b = pos[e.target];
+                if (a && b) {
+                    parts.push('<line x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x +
+                        '" y2="' + b.y + '" stroke="#475569" stroke-width="1"/>');
+                }
+            });
+            nodes.forEach(function (n) {
+                var p = pos[n.id];
+                var isCase = n.group === "case";
+                var color = isCase ? "#2563eb" : (n.group === "Linked Case" ? "#f87171" : "#10b981");
+                var r = isCase ? 10 : 6;
+                var label = String(n.label || "");
+                if (label.length > 18) { label = label.slice(0, 17) + "…"; }
+                
+                parts.push('<g class="ws-node" data-id="' + esc(n.id) + '" style="cursor:pointer">');
+                parts.push('<title>Group: ' + esc(n.group) + '\nID: ' + esc(n.id) + '</title>'); // Tooltip
+                parts.push('<circle cx="' + p.x + '" cy="' + p.y + '" r="' + r + '" fill="' + color + '"/>');
+                parts.push('<text x="' + (p.x + 8) + '" y="' + (p.y + 4) +
+                    '" font-size="10" fill="#cbd5e1">' + esc(label) + '</text>');
+                parts.push('</g>');
+            });
+
+            var transformStr = "translate(" + view.tx + "," + view.ty + ") scale(" + view.k + ")";
+            svg.innerHTML = '<g id="ws-vp" transform="' + transformStr + '">' + parts.join("") + '</g>';
+            
+            // Re-bind click and drag events
+            svg.querySelectorAll(".ws-node").forEach(function (g) {
+                g.addEventListener("dblclick", function () {
+                    var id = g.getAttribute("data-id");
+                    var node = nodes.find(function(n) { return n.id === id; });
+                    if (node && node.group === "Linked Case") {
+                        window.location.href = "/workspace/" + encodeURIComponent(node.id);
+                    } else if (node && node.group !== "case") {
+                        window.location.href = "/entity?type=" + encodeURIComponent(node.group) + "&value=" + encodeURIComponent(node.id);
+                    }
+                });
+                
+                g.addEventListener("mousedown", function (e) {
+                    e.stopPropagation();
+                    dragNodeId = g.getAttribute("data-id");
+                    var rect = svg.getBoundingClientRect();
+                    var clickX = (e.clientX - rect.left) / rect.width * W;
+                    var clickY = (e.clientY - rect.top) / rect.height * H;
+                    var p = pos[dragNodeId];
+                    dragOffset.x = (clickX - view.tx) / view.k - p.x;
+                    dragOffset.y = (clickY - view.ty) / view.k - p.y;
+                });
+            });
+        }
+
+        // Panning and Zooming SVG handlers
+        svg.addEventListener("wheel", function (e) {
+            e.preventDefault();
+            var rect = svg.getBoundingClientRect();
+            var px = (e.clientX - rect.left) / rect.width * W;
+            var py = (e.clientY - rect.top) / rect.height * H;
+            var factor = e.deltaY < 0 ? 1.1 : 0.9;
+            var newK = Math.min(4, Math.max(0.3, view.k * factor));
+            view.tx = px - (px - view.tx) * (newK / view.k);
+            view.ty = py - (py - view.ty) * (newK / view.k);
+            view.k = newK;
+            drawSvg();
+        }, { passive: false });
+
+        svg.addEventListener("mousedown", function (e) {
+            panState.dragging = true;
+            panState.moved = false;
+            panState.sx = e.clientX;
+            panState.sy = e.clientY;
+            svg.style.cursor = "grabbing";
+        });
+
+        svg.addEventListener("mousemove", function (e) {
+            var rect = svg.getBoundingClientRect();
+            if (dragNodeId) {
+                var clickX = (e.clientX - rect.left) / rect.width * W;
+                var clickY = (e.clientY - rect.top) / rect.height * H;
+                var p = pos[dragNodeId];
+                p.x = (clickX - view.tx) / view.k - dragOffset.x;
+                p.y = (clickY - view.ty) / view.k - dragOffset.y;
+                drawSvg();
+            } else if (panState.dragging) {
+                if (Math.abs(e.clientX - panState.sx) > 3 ||
+                    Math.abs(e.clientY - panState.sy) > 3) { panState.moved = true; }
+                view.tx += (e.clientX - panState.sx) / rect.width * W;
+                view.ty += (e.clientY - panState.sy) / rect.height * H;
+                panState.sx = e.clientX;
+                panState.sy = e.clientY;
+                drawSvg();
+            }
+        });
+
+        window.addEventListener("mouseup", function () {
+            dragNodeId = null;
+            panState.dragging = false;
+            svg.style.cursor = "grab";
+        });
+
+        // Fullscreen Toggle
+        target.querySelector(".btn-ws-fs").addEventListener("click", function() {
+            if (!document.fullscreenElement) {
+                svg.parentElement.requestFullscreen().catch(function(err) {
+                    alert("Error entering fullscreen: " + err.message);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+
+        // Export PNG
+        target.querySelector(".btn-ws-png").addEventListener("click", function() {
+            var svgString = new XMLSerializer().serializeToString(svg);
+            var svgBlob = new Blob([svgString], { type: "image/svg+xml;charset=utf-8" });
+            var URL = window.URL || window.webkitURL || window;
+            var blobURL = URL.createObjectURL(svgBlob);
+            var image = new Image();
+            image.onload = function () {
+                var canvas = document.createElement("canvas");
+                canvas.width = W;
+                canvas.height = H;
+                var context = canvas.getContext("2d");
+                context.fillStyle = "#0f172a";
+                context.fillRect(0, 0, canvas.width, canvas.height);
+                context.drawImage(image, 0, 0);
+                
+                var png = canvas.toDataURL("image/png");
+                var downloadLink = document.createElement("a");
+                downloadLink.href = png;
+                downloadLink.download = "workspace_graph_preview.png";
+                document.body.appendChild(downloadLink);
+                downloadLink.click();
+                document.body.removeChild(downloadLink);
+            };
+            image.src = blobURL;
+        });
+
+        drawSvg();
+    };
+
+    window.wsRenderActivity = function (target, data) {
+        if (!data.activity || !data.activity.length) {
+            target.innerHTML = '<p class="ws-msg">No recent activity.</p>';
+            return;
+        }
+        var rows = data.activity.map(function (a) {
+            return '<div class="ws-act-item"><span class="badge">' + esc(a.kind) + '</span>' +
+                '<span class="ws-act-label">' + esc(a.label) + '</span>' +
+                '<span class="ws-sub">' + esc(a.time) + ' · ' + esc(a.actor) + '</span></div>';
+        }).join("");
+        target.innerHTML = rows;
+    };
+
+    function load(card) {
+        if (card.dataset.loaded === "1" || card.dataset.loading === "1") { return; }
+        card.dataset.loading = "1";
+        var body = card.querySelector(".ws-async-body");
+        var renderer = window[card.dataset.render];
+        fetch(card.dataset.endpoint)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                renderer(body, d);
+                card.dataset.loaded = "1";
+                card.dataset.loading = "";
+            })
+            .catch(function () {
+                body.innerHTML = '<p class="ws-msg ws-error">Could not load this section. Collapse and expand to retry.</p>';
+                card.dataset.loading = "";
+            });
+    }
+
+    document.querySelectorAll("details.ws-async").forEach(function (card) {
+        card.addEventListener("toggle", function () {
+            if (card.open) { load(card); }
+        });
+    });
+
+    // Confidence auto-loads once to populate the header metric.
+    var conf = document.getElementById("ws-confidence-card");
+    if (conf) { load(conf); }
+
+    var toggle = document.getElementById("cross-case-toggle");
+    if (toggle && conf) {
+        toggle.addEventListener("change", function () {
+            conf.dataset.endpoint = "/workspace/{{ case[1] }}/api/confidence?cross_case=" + (toggle.checked ? "1" : "0");
+            conf.dataset.loaded = "";
+            conf.dataset.loading = "";
+            load(conf);
+        });
+    }
+
+    // Expand All / Collapse All controls.
+    var allCards = document.querySelectorAll("details.ws-card");
+    var expandBtn = document.getElementById("ws-expand-all");
+    var collapseBtn = document.getElementById("ws-collapse-all");
+    if (expandBtn) {
+        expandBtn.addEventListener("click", function () {
+            allCards.forEach(function (d) { d.open = true; });
+        });
+    }
+    if (collapseBtn) {
+        collapseBtn.addEventListener("click", function () {
+            allCards.forEach(function (d) { d.open = false; });
+        });
+    }
+
+})();
+</script>
+
+<!-- Module 5: Chain of Custody Modals -->
+<div id="coc-edit-modal" class="coc-modal" style="display:none">
+    <div class="coc-modal-box">
+        <div class="coc-modal-header">
+            <strong>Edit Evidence Metadata</strong>
+            <button type="button" id="coc-edit-close" class="coc-close-btn">&times;</button>
+        </div>
+        <form id="coc-edit-form" method="POST">
+            <label class="coc-label">Actor</label>
+            <input type="text" name="actor" value="Investigator">
+            <label class="coc-label">Description</label>
+            <input type="text" name="description" id="coc-edit-desc">
+            <label class="coc-label">Status</label>
+            <select name="status" id="coc-edit-status">
+                <option>Stored</option>
+                <option>Sealed</option>
+                <option>Reviewed</option>
+                <option>Released</option>
+                <option>Archived</option>
+            </select>
+            <button type="submit" class="btn" style="margin-top:12px;display:block">Save</button>
+        </form>
+    </div>
+</div>
+
+<div id="coc-audit-modal" class="coc-modal" style="display:none">
+    <div class="coc-modal-box coc-modal-wide">
+        <div class="coc-modal-header">
+            <strong id="coc-audit-title">Audit Trail</strong>
+            <button type="button" id="coc-audit-close" class="coc-close-btn">&times;</button>
+        </div>
+        <div id="coc-audit-body"><p class="ws-msg">Loading&hellip;</p></div>
+        <div id="coc-audit-pager" style="display:none;margin-top:10px;text-align:center">
+            <button type="button" id="coc-audit-prev" class="btn btn-sm">Prev</button>
+            <span id="coc-audit-pg" style="margin:0 12px;font-size:13px;color:#94a3b8"></span>
+            <button type="button" id="coc-audit-next" class="btn btn-sm">Next</button>
+        </div>
+    </div>
+</div>
+
+<div id="coc-delete-modal" class="coc-modal" style="display:none">
+    <div class="coc-modal-box">
+        <div class="coc-modal-header">
+            <strong>Confirm Deletion</strong>
+            <button type="button" id="coc-delete-close" class="coc-close-btn">&times;</button>
+        </div>
+        <p id="coc-delete-msg" style="margin:12px 0;color:#fca5a5;font-size:14px"></p>
+        <form id="coc-delete-form" method="POST">
+            <label class="coc-label">Actor</label>
+            <input type="text" name="actor" value="Investigator" placeholder="Your name">
+            <div style="margin-top:12px;display:flex;gap:10px">
+                <button type="submit" class="btn btn-danger">Confirm Delete</button>
+                <button type="button" id="coc-delete-cancel" class="btn">Cancel</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div id="coc-toast" class="coc-toast" style="display:none"></div>
+
+<script>
+(function () {
+    function esc(v) {
+        return String(v == null ? "" : v)
+            .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function showModal(id) { document.getElementById(id).style.display = "flex"; }
+    function hideModal(id) { document.getElementById(id).style.display = "none"; }
+
+    function toast(msg, ok) {
+        var t = document.getElementById("coc-toast");
+        t.textContent = msg;
+        t.className = "coc-toast " + (ok ? "coc-toast-ok" : "coc-toast-fail");
+        t.style.display = "block";
+        clearTimeout(t._tid);
+        t._tid = setTimeout(function () { t.style.display = "none"; }, 5000);
+    }
+
+    // Edit Modal
+    document.querySelectorAll(".coc-edit-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            document.getElementById("coc-edit-form").action =
+                "/workspace/" + btn.dataset.caseid + "/evidence/" + btn.dataset.evid + "/edit";
+            document.getElementById("coc-edit-desc").value = btn.dataset.description || "";
+            var sel = document.getElementById("coc-edit-status");
+            for (var i = 0; i < sel.options.length; i++) {
+                sel.options[i].selected = (sel.options[i].value === btn.dataset.status);
+            }
+            showModal("coc-edit-modal");
+        });
+    });
+    document.getElementById("coc-edit-close").addEventListener("click", function () {
+        hideModal("coc-edit-modal");
+    });
+
+    // Verify Button
+    document.querySelectorAll(".coc-verify-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            btn.disabled = true;
+            btn.textContent = "Verifying…";
+            fetch("/workspace/" + btn.dataset.caseid + "/evidence/" + btn.dataset.evid + "/verify")
+                .then(function (r) { return r.json(); })
+                .then(function (d) {
+                    btn.disabled = false;
+                    btn.textContent = "Verify";
+                    toast((d.verified ? "✓ VERIFIED — " : "✗ FAILED — ") + d.reason, d.verified);
+                })
+                .catch(function () {
+                    btn.disabled = false;
+                    btn.textContent = "Verify";
+                    toast("Verification request failed.", false);
+                });
+        });
+    });
+
+    // Audit Modal
+    var auditEvid = null, auditCaseid = null, auditPage = 1, auditPages = 1;
+
+    function loadAudit(page) {
+        var body = document.getElementById("coc-audit-body");
+        var pager = document.getElementById("coc-audit-pager");
+        body.innerHTML = '<p class="ws-msg">Loading…</p>';
+        pager.style.display = "none";
+        fetch("/workspace/" + auditCaseid + "/evidence/" + auditEvid + "/audit?page=" + page)
+            .then(function (r) { return r.json(); })
+            .then(function (d) {
+                auditPage = d.page;
+                auditPages = d.pages;
+                if (!d.events || !d.events.length) {
+                    body.innerHTML = '<p class="ws-msg">No custody events recorded.</p>';
+                    return;
+                }
+                var rows = d.events.map(function (e) {
+                    var extra = "";
+                    if (e.prev_value) { extra += '<br><span class="ws-sub">Prev: ' + esc(e.prev_value) + '</span>'; }
+                    if (e.new_value)  { extra += '<br><span class="ws-sub">New: '  + esc(e.new_value)  + '</span>'; }
+                    return '<tr><td>' + esc(e.action) + '</td><td>' + esc(e.actor) +
+                           '</td><td>' + esc(e.event_time) + '</td><td>' +
+                           esc(e.notes) + extra + '</td></tr>';
+                }).join("");
+                body.innerHTML =
+                    '<table style="width:100%;font-size:13px;margin:0">' +
+                    '<tr><th>Action</th><th>Actor</th><th>Timestamp</th><th>Notes / Changes</th></tr>' +
+                    rows + '</table>';
+                if (d.pages > 1) {
+                    pager.style.display = "block";
+                    document.getElementById("coc-audit-pg").textContent =
+                        "Page " + d.page + " of " + d.pages;
+                    document.getElementById("coc-audit-prev").disabled = (d.page <= 1);
+                    document.getElementById("coc-audit-next").disabled = (d.page >= d.pages);
+                }
+            })
+            .catch(function () {
+                body.innerHTML = '<p class="ws-msg ws-error">Could not load audit trail.</p>';
+            });
+    }
+
+    document.querySelectorAll(".coc-audit-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            auditEvid   = btn.dataset.evid;
+            auditCaseid = btn.dataset.caseid;
+            document.getElementById("coc-audit-title").textContent =
+                "Audit Trail — " + auditEvid;
+            showModal("coc-audit-modal");
+            loadAudit(1);
+        });
+    });
+    document.getElementById("coc-audit-close").addEventListener("click", function () { hideModal("coc-audit-modal"); });
+    document.getElementById("coc-audit-prev").addEventListener("click", function () {
+        if (auditPage > 1) { loadAudit(auditPage - 1); }
+    });
+    document.getElementById("coc-audit-next").addEventListener("click", function () {
+        if (auditPage < auditPages) { loadAudit(auditPage + 1); }
+    });
+
+    // Delete Modal
+    document.querySelectorAll(".coc-delete-btn").forEach(function (btn) {
+        btn.addEventListener("click", function () {
+            document.getElementById("coc-delete-form").action =
+                "/workspace/" + btn.dataset.caseid + "/evidence/" + btn.dataset.evid + "/delete";
+            document.getElementById("coc-delete-msg").textContent =
+                "Permanently delete " + btn.dataset.evid + " (" + btn.dataset.filename + ")? " +
+                "The deletion is logged in the immutable audit trail.";
+            showModal("coc-delete-modal");
+        });
+    });
+    document.getElementById("coc-delete-close").addEventListener("click",  function () { hideModal("coc-delete-modal"); });
+    document.getElementById("coc-delete-cancel").addEventListener("click", function () { hideModal("coc-delete-modal"); });
+
+    // Close modals on overlay click
+    ["coc-edit-modal", "coc-audit-modal", "coc-delete-modal"].forEach(function (id) {
+        document.getElementById(id).addEventListener("click", function (e) {
+            if (e.target === this) { hideModal(id); }
+        });
+    });
+})();
+</script>
+
+<script>
+(function() {
+    function handleHash() {
+        const hash = window.location.hash;
+        if (hash) {
+            const targetId = hash.substring(1) + "-section";
+            const targetCard = document.getElementById(targetId);
+            if (targetCard) {
+                targetCard.open = true;
+                setTimeout(() => {
+                    targetCard.scrollIntoView({ behavior: 'smooth' });
+                }, 100);
+            }
+        }
+    }
+
+    document.querySelectorAll('.workspace-nav a[href^="#"]').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href').substring(1) + "-section";
+            const targetCard = document.getElementById(targetId);
+            if (targetCard) {
+                targetCard.open = true;
+                targetCard.scrollIntoView({ behavior: 'smooth' });
+                window.location.hash = this.getAttribute('href').substring(1);
+            }
+        });
+    });
+
+    window.addEventListener('hashchange', handleHash);
+    
+    // Check hash on DOM content loaded
+    if (document.readyState === 'loading') {
+        window.addEventListener('DOMContentLoaded', handleHash);
+    } else {
+        handleHash();
+    }
+})();
+</script>
+
+<style>
+    .workspace-nav {
+        display: flex;
+        gap: 5px;
+        margin-top: 15px;
+        margin-bottom: 20px;
+        border-bottom: 1px solid #334155;
+    }
+    .ws-nav-link {
+        padding: 10px 18px;
+        background: transparent;
+        color: #94a3b8;
+        text-decoration: none;
+        border-radius: 6px 6px 0 0;
+        font-weight: bold;
+        font-size: 13px;
+        border: 1px solid transparent;
+        border-bottom: none;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+    .ws-nav-link:hover {
+        color: #ffffff;
+        background: rgba(255, 255, 255, 0.04);
+    }
+    .ws-nav-link.active {
+        color: #60a5fa;
+        background: #1e293b;
+        border-color: #334155;
+        border-bottom: 1px solid #1e293b;
+        margin-bottom: -1px;
+    }
+</style>
+
+{% endblock %}

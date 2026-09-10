@@ -1,0 +1,3 @@
+--- Mock Evidence File Content ---
+Name: sim_deactivation_confirm.txt
+Description: SMS alert log showing network carrier SIM swap request confirmation details.

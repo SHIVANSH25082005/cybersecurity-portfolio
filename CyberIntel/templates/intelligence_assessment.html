@@ -1,0 +1,238 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Intelligence Assessment Report</h1>
+        <p class="subtitle">Court-defensible investigation assessment</p>
+    </div>
+    <div class="workspace-actions">
+        <a class="btn btn-outline" href="/workspace/{{ case_id }}"><i class="fa-solid fa-briefcase"></i> Case Workspace</a>
+        <a href="/download_report/{{ case_id }}" class="btn btn-primary"><i class="fa-solid fa-download"></i> Download PDF Report</a>
+    </div>
+</div>
+
+<div style="max-width: 1000px; margin: 0 auto; display: flex; flex-direction: column; gap: 20px;">
+
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="card">
+        <div class="card-header">
+            <h3>Executive Summary</h3>
+        </div>
+        <div class="card-body" style="font-size: 1.05rem; line-height: 1.6; color: var(--text-secondary);">
+            <p style="margin: 0;">{{ report.executive_summary }}</p>
+        </div>
+    </div>
+
+    <!-- 1. EVIDENCE SUMMARY -->
+    <div class="card">
+        <div class="card-header">
+            <h3>1. Evidence Summary &amp; Indicators Provenance</h3>
+        </div>
+        <div class="card-body" style="padding: 0;">
+            
+            <div class="table-container" style="border: none; margin: 0; border-radius: 0;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Indicator coordinate</th>
+                            <th>Indicator Type</th>
+                            <th>Origin Provenance Module</th>
+                            <th>Evidence Classification</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Entities -->
+                        {% for entity in report.entities %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ entity[2] }}</td>
+                            <td>{{ entity[1] }}</td>
+                            <td>Entity Extraction Pipeline</td>
+                            <td><span class="badge badge-medium">Derived Evidence</span></td>
+                        </tr>
+                        {% endfor %}
+                        
+                        <!-- Complaints Indicators -->
+                        {% for comp in report.complaints %}
+                        {% if comp[2] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ comp[2] }}</td>
+                            <td>Complainant Phone</td>
+                            <td>National Cyber Crime Portal Ingest</td>
+                            <td><span class="badge badge-low">Direct Evidence</span></td>
+                        </tr>
+                        {% endif %}
+                        {% if comp[3] %}
+                        <tr>
+                            <td style="font-family: var(--font-mono); font-weight: bold; color: #fff;">{{ comp[3] }}</td>
+                            <td>Complainant UPI</td>
+                            <td>National Cyber Crime Portal Ingest</td>
+                            <td><span class="badge badge-low">Direct Evidence</span></td>
+                        </tr>
+                        {% endif %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. ANALYTICAL ASSESSMENT -->
+    <div class="card">
+        <div class="card-header">
+            <h3>2. Analytical Network Topology Assessment</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px;">
+                <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; text-align: center;">
+                    <h4 style="color: #fff; font-size: 12px; margin-top: 0; margin-bottom: 10px;">Spring Layout Topology</h4>
+                    <img src="/static/link_graph.png" alt="Spring Layout Link Graph" style="max-width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                </div>
+                <div style="background: rgba(0, 0, 0, 0.2); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 12px; text-align: center;">
+                    <h4 style="color: #fff; font-size: 12px; margin-top: 0; margin-bottom: 10px;">Concentric Layout Topology</h4>
+                    <img src="/static/link_graph_concentric.png" alt="Concentric Layout Link Graph" style="max-width: 100%; height: auto; border: 1px solid var(--border-subtle); border-radius: var(--radius-sm);">
+                </div>
+            </div>
+
+            <h4 style="color: #fff; font-size: 13px; margin-top: 20px; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.05em; color: var(--primary);">Primary Core Heuristic Findings</h4>
+            <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 13.5px; color: var(--text-primary);">
+                {% for finding in report.findings %}
+                <li style="margin-bottom: 6px;">{{ finding }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- 3. SUPPORTING EVIDENCE -->
+    <div class="card">
+        <div class="card-header">
+            <h3>3. Supporting Evidence &amp; Confidence Details</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr; gap: 10px;">
+                {% for ip in report.ipdr_records|map(attribute='2')|unique %}
+                {% if ip %}
+                <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 15px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-subtle); padding-bottom: 6px; margin-bottom: 10px;">
+                        <strong style="color: #fff; font-family: var(--font-mono); font-size: 14px;">{{ ip }}</strong>
+                        <span class="badge badge-info"><i class="fa-solid fa-network-wired"></i> Shared IP Node</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin: 0;">Provides shared infrastructure linking multiple devices. Timeline shows close-proximity operations.</p>
+                </div>
+                {% endif %}
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. CONTRADICTING EVIDENCE & CONFLICTS -->
+    <div class="card">
+        <div class="card-header">
+            <h3>4. Contradicting Evidence &amp; Conflicts</h3>
+        </div>
+        <div class="card-body">
+            {% if contradictions %}
+            <div class="flag-item flag-on" style="flex-direction: column; align-items: stretch; gap: 8px;">
+                <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 13px;">
+                    {% for c in contradictions %}
+                    <li style="margin-bottom: 8px;">
+                        <strong style="color: var(--color-high);">[{{ c.severity }}] {{ c.type|replace('_', ' ')|capitalize }}</strong>: {{ c.description }}
+                        <br>
+                        <span style="color: var(--color-medium); font-size: 12px;"><i>Investigation Context:</i> {{ c.explanation }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            {% else %}
+            <div class="flag-item flag-off">
+                <i class="fa-solid fa-circle-check"></i>
+                <span>No contradictions or chronological conflicts detected in this case file.</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- 5. ALTERNATIVE EXPLANATIONS CONSIDERED -->
+    <div class="card">
+        <div class="card-header">
+            <h3>5. Alternative Explanations Considered</h3>
+        </div>
+        <div class="card-body">
+            
+            <div style="display: grid; grid-template-columns: 1fr; gap: 15px;">
+                {% for hyp in hypothesis.ranked_hypotheses %}
+                <div style="background: rgba(255, 255, 255, 0.02); border: 1px solid var(--border-subtle); border-radius: var(--radius-md); padding: 15px; border-left: 3px solid {% if hyp.name == hypothesis.likely_scenario %}var(--color-low){% else %}var(--secondary){% endif %};">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                        <strong style="color: #fff; font-size: 13px;">{{ hyp.name }} {% if hyp.name == hypothesis.likely_scenario %}(Selected Primary){% endif %}</strong>
+                        <span class="badge badge-info" style="font-size: 11px;">Score: {{ hyp.score }}</span>
+                    </div>
+                    <p style="font-size: 13px; color: var(--text-secondary); margin: 4px 0 8px 0;">Reasoning: {{ hyp.reason_ranked_above_alternatives }}</p>
+                    
+                    {% if hyp.supporting_evidence %}
+                    <div style="font-size: 11px; margin-top: 6px; color: var(--text-muted);">
+                        <strong style="color: var(--color-low);">Support:</strong> {{ hyp.supporting_evidence|join('; ') }}
+                    </div>
+                    {% endif %}
+                    {% if hyp.contradicting_evidence %}
+                    <div style="font-size: 11px; margin-top: 4px; color: var(--text-muted);">
+                        <strong style="color: var(--color-high);">Conflict:</strong> {{ hyp.contradicting_evidence|join('; ') }}
+                    </div>
+                    {% endif %}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+
+    <!-- 6. REASON ALTERNATIVES RANKED LOWER -->
+    <div class="card">
+        <div class="card-header">
+            <h3>6. Reason Alternatives Were Ranked Lower</h3>
+        </div>
+        <div class="card-body">
+            
+            <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 13.5px; color: var(--text-primary);">
+                {% for hyp in hypothesis.ranked_hypotheses %}
+                {% if hyp.name != hypothesis.likely_scenario %}
+                <li style="margin-bottom: 8px;"><b>{{ hyp.name }}:</b> {{ hyp.reason_ranked_above_alternatives }}</li>
+                {% endif %}
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <!-- 7. FINAL INVESTIGATIVE ASSESSMENT -->
+    <div class="card" style="border-color: rgba(59, 130, 246, 0.3); background-color: rgba(59, 130, 246, 0.02);">
+        <div class="card-header" style="background-color: rgba(59, 130, 246, 0.05); border-bottom-color: rgba(59, 130, 246, 0.2);">
+            <h3>7. Final Investigative Assessment</h3>
+        </div>
+        <div class="card-body">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; border-bottom: 1px solid var(--border-subtle); padding-bottom: 15px;">
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; font-weight: 600;">Primary Threat Scenario</span>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-top: 4px;"><i class="fa-solid fa-triangle-exclamation" style="color: var(--color-medium);"></i> {{ hypothesis.likely_scenario }}</div>
+                </div>
+                <div>
+                    <span style="font-size: 11px; text-transform: uppercase; color: var(--text-secondary); letter-spacing: 0.05em; font-weight: 600;">Assessment Confidence</span>
+                    <div style="font-size: 1.25rem; font-weight: 800; color: #fff; margin-top: 4px;">
+                        <span class="badge badge-info" style="font-size: 12px; padding: 4px 10px;">{{ hypothesis.confidence_level }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <p style="font-size: 1.05rem; line-height: 1.6; color: #fff; margin: 10px 0 20px 0;"><b>Investigative Summary:</b> {{ hypothesis.overall_assessment }}</p>
+            
+            <div style="background-color: rgba(0, 0, 0, 0.15); padding: 15px; border-radius: var(--radius-md); border: 1px solid var(--border-subtle);">
+                <span style="font-size: 11px; text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.05em; display: block; margin-bottom: 8px; font-weight: 700;">Recommended Next Investigation Steps</span>
+                <ul style="padding-left: 20px; margin: 0; line-height: 1.6; font-size: 13.5px; color: #fff;">
+                    {% for action in hypothesis.next_actions %}
+                    <li style="margin-bottom: 6px;">{{ action }}</li>
+                    {% endfor %}
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

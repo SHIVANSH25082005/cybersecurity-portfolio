@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="workspace-header">
+    <div>
+        <h1>Case Correlation Graph</h1>
+    </div>
+</div>
+
+<div class="card" style="max-width: 600px; margin-bottom: 25px;">
+    <div class="card-header">
+        <h3>Graph Generation Parameters</h3>
+    </div>
+    <div class="card-body">
+        <form method="POST" style="margin-bottom: 0;">
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                <div class="form-group">
+                    <label>First Case ID</label>
+                    <input
+                        type="text"
+                        name="case1"
+                        value="{{ case1 or '' }}"
+                        placeholder="e.g. CASE001"
+                        required
+                    >
+                </div>
+                <div class="form-group">
+                    <label>Second Case ID</label>
+                    <input
+                        type="text"
+                        name="case2"
+                        value="{{ case2 or '' }}"
+                        placeholder="e.g. CASE002"
+                        required
+                    >
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 15px;"><i class="fa-solid fa-arrows-spin"></i> Generate Graph</button>
+        </form>
+    </div>
+</div>
+
+{% if case1 and case2 %}
+
+<div class="visualization-panel">
+    <div class="visualization-header">
+        <div class="visualization-title">
+            <h3>Relationship Overlap Graph</h3>
+            <p>Case <strong>{{ case1 }}</strong> &harr; Case <strong>{{ case2 }}</strong></p>
+        </div>
+        <div class="visualization-controls">
+            <a href="/static/case_graph.png" download="case_correlation_graph.png" class="btn btn-sm btn-success"><i class="fa-solid fa-download"></i> Download PNG</a>
+        </div>
+    </div>
+    
+    <div style="text-align: center; background: #0b0f19; padding: 20px; border: 1px solid var(--border-subtle); border-radius: var(--radius-lg); display: flex; align-items: center; justify-content: center;">
+        <img src="/static/case_graph.png?t={{ case1 }}_{{ case2 }}" alt="Correlation Graph Visual" style="max-width: 100%; height: auto; border-radius: var(--radius-md);"
+             onerror="this.style.display='none'; document.getElementById('graph-error-msg').style.display='flex';">
+        <div id="graph-error-msg" style="display:none; flex-direction: column; align-items: center; gap: 12px; color: var(--text-secondary);">
+            <i class="fa-solid fa-image-slash" style="font-size: 2.5rem; color: var(--text-muted);"></i>
+            <p style="margin: 0; font-weight: 600; color: var(--text-primary);">Graph could not be generated</p>
+            <p style="margin: 0; font-size: 13px;">Check that both Case IDs exist and contain overlapping indicator data.</p>
+        </div>
+    </div>
+</div>
+
+{% else %}
+
+<div class="empty-state" style="margin-top: 2rem;">
+    <i class="fa-solid fa-circle-nodes"></i>
+    <h3>No graph generated yet</h3>
+    <p>Enter two Case IDs above and click <strong>Generate Graph</strong> to visualize their shared indicator overlap.</p>
+</div>
+
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block content %}
+
+<div class="container">
+
+    <h1>Correlation Analysis</h1>
+
+    <h2>Risk Score: {{ risk_score }}</h2>
+
+    <ul>
+        {% for match in matches %}
+            <li>{{ match }}</li>
+        {% endfor %}
+    </ul>
+
+    <a href="/">Back to Dashboard</a>
+
+</div>
+
+{% endblock %}
